@@ -1,1 +1,69 @@
+<script>
+/* ====== 管理ゲート（URL秘匿 + 端末制限 + ログイン）====== */
+/* 共有トークン（URLに ?key=XXXX で配布。後から変更OK） */
+const SHARED_TOKEN = "set-your-admin-token-here";
+
+/* 既存の設定を読む（あなたの管理JSと整合） */
+const ADMIN_KEYS = { SETTINGS:'sr_admin_settings', SESSION:'sr_admin_session', DEVICE:'sr_admin_device_id' };
+
+function loadSettings(){ try{ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SETTINGS)||'{}'); }catch{ return {}; } }
+function saveSettings(s){ localStorage.setItem(ADMIN_KEYS.SETTINGS, JSON.stringify(s)); }
+function session(){ try{ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SESSION)||'{}'); }catch{ return {}; } }
+function getDeviceId(){
+  let v = localStorage.getItem(ADMIN_KEYS.DEVICE);
+  if(!v){ v = `dev-${(crypto&&crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2))}`;
+    localStorage.setItem(ADMIN_KEYS.DEVICE, v);
+  }
+  return v;
+}
+
+/* 初期化：トグルのデフォルト（存在しない場合） */
+(function ensureDefaults(){
+  const s = loadSettings();
+  if (typeof s.loginEnabled === 'undefined') s.loginEnabled = false;
+  if (typeof s.deviceLockEnabled === 'undefined') s.deviceLockEnabled = false;
+  if (!Array.isArray(s.users)) s.users = [];           // {id,name,pin}
+  if (!Array.isArray(s.allowedDevices)) s.allowedDevices = [];
+  saveSettings(s);
+})();
+
+/* 1) 共有トークン経由の初回登録（?key=XXXX） */
+(function tokenIntake(){
+  const q = new URLSearchParams(location.search);
+  const key = q.get('key');
+  if (!key) return;
+  if (key === SHARED_TOKEN) {
+    // この端末を許可リストへ登録
+    const s = loadSettings();
+    const id = getDeviceId();
+    if (!s.allowedDevices.includes(id)) s.allowedDevices.push(id);
+    // 最低限、端末ロックONにしておく（任意）
+    s.deviceLockEnabled = true;
+    saveSettings(s);
+    sessionStorage.setItem('admin_token_ok', '1'); // セッション内OKフラグ
+    // URLの?keyを消す
+    const url = new URL(location.href);
+    url.searchParams.delete('key');
+    history.replaceState(null,'',url.toString());
+    alert('この端末を管理者端末として登録しました。');
+  }
+})();
+
+/* 2) ゲート判定：端末 or ログインどちらか満たせば入室可（両方ONなら両方） */
+(function gate(){
+  const s = loadSettings();
+  const devId = getDeviceId();
+  const ses   = session();
+
+  const deviceOK = !s.deviceLockEnabled || (s.allowedDevices||[]).includes(devId);
+  const loginOK  = !s.loginEnabled      || !!ses.userId;
+
+  if (!(deviceOK && loginOK)) {
+    // 共有URLトークンで来て、まだセッションOKなら許可（1タブ限定）
+    if (sessionStorage.getItem('admin_token_ok') === '1') return;
+    // それ以外は一般画面へ
+    location.replace('../user.html');
+  }
+})();
+</script>
 
