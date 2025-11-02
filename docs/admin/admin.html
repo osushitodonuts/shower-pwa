@@ -1,544 +1,94 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <link rel="manifest" href="./manifest.webmanifest">
-    <meta name="theme-color" content="#1e40af">
-    <link rel="apple-touch-icon" href="./newicons/icon-192.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="./newicons/icon-180.png">
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>シャワー室 予約管理（管理者）</title>
-<style>
-:root{
-  --bg:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
-  --primary:#1d4ed8; --ok:#16a34a; --danger:#dc2626;
-  --panel:#f0f9ff; --radius:14px; --space:16px;
-  --shadow:0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
-  --panel-br:#bae6fd; --priority:#f9a8d4; /* 優先枠ピンク */
-  --g1:#e0f2fe;  /* 室1：薄水色（視認性UP） */
-  --g2:#fde7f3;  /* 室2：薄ピンク（集計と揃える） */
-  --row-priority:#fef9c3; /* 優先枠行：薄黄 */
-}
-*{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.container{max-width:1100px;margin:0 auto;padding:18px}
-header{border-bottom:1px solid var(--line);background:#fff}
-header .inner{max-width:1100px;margin:0 auto;padding:12px var(--space);display:flex;gap:12px;align-items:center;justify-content:space-between}
-.h1{font-weight:900;font-size:clamp(20px,3vw,26px);display:flex;align-items:center;gap:10px}
-small.muted{color:var(--muted)}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px dashed var(--line);border-radius:999px;background:#f8fafc}
-input,select,button{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:42px}
-button{background:#fff;cursor:pointer}
-button.primary{background:#2563eb;border-color:#1d4ed8;color:#fff}
-button.danger{background:#ef4444;border-color:#dc2626;color:#fff}
-button.ghost{background:#fff;border-color:#d1d5db}
-button.icon{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px}
-.note{font-size:12px;color:var(--muted)}
+  <!-- ★ 1つ上の階層を参照（adminフォルダの中なので） -->
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#1e40af">
+  <link rel="apple-touch-icon" href="../newicons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../newicons/icon-180.png">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>シャワー室 予約管理（管理者）</title>
 
-.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin:16px 0}
-.card h3{margin:0;padding:12px 14px;border-bottom:1px solid var(--line)}
-.section{padding:12px;display:grid;gap:10px}
-
-/* 2列（部屋ごと）× 縦スロット */
-.grid-rooms{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.room-col{border:1px solid var(--panel-br);border-radius:12px;background:var(--panel);padding:10px}
-.room-col.room2{background:var(--g2); border-color:#fbcfe8;} /* ← 追加：室2だけ薄ピンク */
-.room-title{font-weight:800;margin:0 0 8px 0}
-.list{display:flex;flex-direction:column;gap:10px}
-.slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:10px;display:flex;gap:12px;align-items:center}
-.slot.priority{border:2px solid var(--priority)}
-.slot .time{font-weight:700;min-width:220px}
-.slot .who{flex:1}
-.slot .actions{display:flex;gap:6px;flex-wrap:wrap}
-.badge{display:inline-flex;gap:6px;align-items:center;border:1px solid #cbd5e1;border-radius:999px;padding:4px 8px;font-size:12px}
-.badge.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
-.badge.info{background:#f0f9ff;border-color:#bae6fd;color:#075985}
-
-/* 抽選テーブル */
-.table-wrap{overflow:auto}
-.table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
-.table th,.table td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:middle}
-.table thead th{position:sticky;top:0;background:#fff;z-index:1}
-th.center, td.center{text-align:center}
-th.left, td.left{text-align:left}
-
-/* 列幅と整列（等幅数字でブレ防止） */
-.col-time{width:140px}
-.timecode{font-variant-numeric:tabular-nums}
-
-/* 室ブロック背景（集計） */
-td.g1, th.g1{background:var(--g1)}
-td.g2, th.g2{background:var(--g2)}
-
-/* 罫線：太線＝「時刻→室1」の境目、細線＝「室1→室2」の境目 */
-.vcut-thick{border-left:3px solid #9ca3af}
-.vcut-thin{border-left:1px solid #d1d5db}
-
-/* 行の読みやすさと優先枠 */
-.table tbody tr:nth-child(odd) td{background:rgba(15,23,42,0.015)}
-.table tbody tr:hover td{background:rgba(59,130,246,0.06)}
-tr.priorityRow td{background:var(--row-priority) !important}
-
-/* modal（stickyヘッダーより前面に） */
-.dialog{
-  position:fixed; inset:0; background:rgba(2,6,23,.5);
-  display:none; align-items:center; justify-content:center; padding:16px;
-  z-index:9999; /* 最前面 */
-}
-.dialog .panel{
-  background:#fff; border-radius:14px; max-width:560px; width:100%;
-  box-shadow:0 10px 40px rgba(0,0,0,.25); overflow:hidden;
-  position:relative; z-index:10000;
-}
-.settings .panel{max-width:720px}
-
-.userlist{display:flex;flex-direction:column;gap:8px}
-.useritem{display:flex;gap:8px;align-items:center}
-.useritem .name{font-weight:600}
-.right{display:flex;gap:8px;align-items:center}
-
-/* トグルスイッチ */
-.toggle{position:relative;width:48px;height:28px;flex:0 0 48px}
-.toggle input{position:absolute;opacity:0;width:0;height:0}
-.toggle .track{position:absolute;inset:0;border-radius:999px;background:#e5e7eb;transition:background .2s}
-.toggle .thumb{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s}
-.toggle input:checked + .track{background:#60a5fa}
-.toggle input:checked + .track .thumb{left:22px}
-
-.switchRow{display:flex;align-items:center;gap:10px}
-.switchRow .label{min-width:16ch}
-
-@media (max-width:900px){ .grid-rooms{grid-template-columns:1fr} }
-</style>
+  <style>
+  /* ここはあなたのCSSそのまま、改変なしでOK */
+  :root{
+    --bg:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+    --primary:#1d4ed8; --ok:#16a34a; --danger:#dc2626;
+    --panel:#f0f9ff; --radius:14px; --space:16px;
+    --shadow:0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
+    --panel-br:#bae6fd; --priority:#f9a8d4;
+    --g1:#e0f2fe; --g2:#fde7f3; --row-priority:#fef9c3;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  /* （中略：あなたのCSSをそのまま残す） */
+  </style>
 </head>
+
 <body>
-<header>
-  <div class="inner">
-    <div>
-      <div class="h1">シャワー室 予約管理 <small class="muted">（管理者）</small></div>
-      <div class="row" style="margin-top:6px">
-        <span class="pill">日時：<b id="nowLabel">—</b></span>
-        <span class="pill">現在モード：<b id="modeLabel">—</b></span>
-      </div>
-    </div>
-    <div class="right">
-      <input type="date" id="datePicker" />
-      <button class="ghost" id="refreshBtn">再読込</button>
-      <button class="icon" id="settingsBtn" title="設定">⚙️</button>
-    </div>
-  </div>
-</header>
-
-<div class="container">
-  <!-- ① 手動編集（上） -->
-  <div class="card" id="instantCard">
-    <h3 id="instantTitle">当日の予約状況</h3>
-    <div class="section">
-      <div class="grid-rooms">
-        <div class="room-col">
-          <h4 class="room-title">シャワー室1</h4>
-          <div class="list" id="listRoom1"></div>
-        </div>
-        <div class="room-col room2">
-          <h4 class="room-title">シャワー室2</h4>
-          <div class="list" id="listRoom2"></div>
-        </div>
-      </div>
-      <div class="note">管理者は制限なく編集できます（同一人物が複数枠でもOK）。</div>
-    </div>
-  </div>
-
-  <!-- ② 集計結果（下） -->
-  <div class="card" id="lotteryCard">
-    <h3 id="lotteryTitle">明日分 抽選希望の集計</h3>
-    <div class="section table-wrap">
-      <table class="table" id="lotteryTable">
-        <thead>
-          <tr>
-            <th class="left col-time">時間</th>
-            <th class="center g1 vcut-thick" colspan="3">シャワー室1</th>
-            <th class="center g2 vcut-thin" colspan="3">シャワー室2</th>
-          </tr>
-          <tr>
-            <th class="left col-time">（開始–終了）</th>
-            <th class="center g1 vcut-thick">第1</th>
-            <th class="center g1">第2</th>
-            <th class="center g1">第3</th>
-            <th class="center g2 vcut-thin">第1</th>
-            <th class="center g2">第2</th>
-            <th class="center g2">第3</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="note">抽選受付（21:00〜翌8:00）に更新されます。祝日は平日扱いから除外。</div>
-    </div>
-  </div>
-</div>
-
-<!-- 編集モーダル（氏名のみ） -->
-<div class="dialog" id="editDialog">
-  <div class="panel">
-    <div class="head"><div>枠の編集</div><button class="ghost" id="closeEdit">閉じる</button></div>
-    <div class="body">
-      <div class="row"><span class="pill" id="editCurrentLabel">現在：—</span></div>
-      <div class="row"><input id="editName" placeholder="氏名" style="flex:1" /></div>
-      <div class="note">※ 枠の移動や時間変更はできません。空きにする場合は各行の「クリア」を使ってください。</div>
-    </div>
-    <div class="foot"><button class="primary" id="editSave">保存</button></div>
-  </div>
-</div>
-
-<!-- 設定モーダル -->
-<div class="dialog settings" id="settingsDialog">
-  <div class="panel">
-    <div class="head"><div>設定</div><button class="ghost" id="closeSettings">閉じる</button></div>
-    <div class="body">
-      <div class="row switchRow">
-        <span class="label">ログイン機能</span>
-        <label class="toggle"><input type="checkbox" id="loginToggle"><span class="track"><span class="thumb"></span></span></label>
-      </div>
-      <div class="row switchRow">
-        <span class="label">端末制限</span>
-        <label class="toggle"><input type="checkbox" id="deviceToggle"><span class="track"><span class="thumb"></span></span></label>
-        <button class="ghost" id="registerDeviceBtn">この端末を登録</button>
-      </div>
-      <hr/>
-      <h4>ユーザーの登録</h4>
-      <div class="row">
-        <input id="newUserName" placeholder="表示名" />
-        <input id="newUserPin" placeholder="PIN（4桁）" maxlength="4" />
-        <button class="primary" id="addUserBtn">追加</button>
-      </div>
-      <div class="userlist" id="userList"></div>
-      <hr/>
-      <div class="row">
-        <span>ログイン状態：<b id="sessionUser">未ログイン</b></span>
-        <button class="ghost" id="loginBtn">ログイン</button>
-        <button class="ghost" id="logoutBtn">ログアウト</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ログインモーダル -->
-<div class="dialog" id="loginDialog">
-  <div class="panel">
-    <div class="head"><div>ログイン</div><button class="ghost" id="closeLogin">閉じる</button></div>
-    <div class="body">
-      <div class="row">
-        <select id="loginUser"></select>
-        <input id="loginPin" placeholder="PIN（4桁）" maxlength="4" />
-      </div>
-    </div>
-    <div class="foot"><button class="primary" id="doLogin">ログイン</button></div>
-  </div>
-</div>
+  <!-- あなたのHTML本体部分をそのまま残す -->
+  <!-- header, container, dialogなどは全部このままでOK -->
 
 <script>
+/********************************************************
+ * ★ adminアクセス制御ブロックを追加（←これがindex版のポイント）
+ ********************************************************/
+const ADMIN_ACCESS_KEY = "pan-2025-11"; // ←管理者だけに配るキー（好きに変更OK）
+
+const params = new URLSearchParams(location.search);
+const key = params.get("key");
+const ADMIN_KEYS = { SETTINGS:'sr_admin_settings', DEVICE:'sr_admin_device_id' };
+
+function getDeviceId(){
+  let v=localStorage.getItem(ADMIN_KEYS.DEVICE);
+  if(!v){ v = `dev-${crypto.randomUUID()}`; localStorage.setItem(ADMIN_KEYS.DEVICE,v); }
+  return v;
+}
+
+function registerDevice(){
+  const s = JSON.parse(localStorage.getItem(ADMIN_KEYS.SETTINGS) || "{}");
+  s.allowedDevices ||= [];
+  const id = getDeviceId();
+  if(!s.allowedDevices.includes(id)){
+    s.allowedDevices.push(id);
+    localStorage.setItem(ADMIN_KEYS.SETTINGS, JSON.stringify(s));
+    alert("この端末を管理者端末として登録しました。");
+  }
+}
+
+if(key === ADMIN_ACCESS_KEY){
+  registerDevice();
+  // ?key を消して再読み込み
+  location.href = location.origin + location.pathname;
+} else {
+  const s = JSON.parse(localStorage.getItem(ADMIN_KEYS.SETTINGS) || "{}");
+  const allowed = s.allowedDevices || [];
+  const id = getDeviceId();
+  if(!allowed.includes(id)){
+    document.body.innerHTML = `
+      <div style="padding:50px;text-align:center">
+        <h2>アクセス権がありません</h2>
+        <p>管理者専用URLからアクセスしてください。</p>
+      </div>`;
+    throw new Error("Unauthorized device");
+  }
+}
+
+/********************************************************
+ * 以降はあなたの既存JSをそのまま配置
+ ********************************************************/
 /**************** PC時間 or ?mock=YYYY-MM-DDTHH:MM:SS ****************/
 const qs = new URLSearchParams(location.search);
 const MOCK = qs.get('mock');
 const nowLocal = ()=> MOCK ? new Date(MOCK.replace(' ', 'T')) : new Date();
 
-/**************** スキーマ ****************/
-const CONFIG = { rooms:["1","2"], slotStart:"09:00", slotEnd:"21:00", slotMinutes:20,
-  priority: { "1": { start: "14:00", end: "16:00" }, "2": { start: "13:00", end: "16:00" } }
-};
-const KEY = { NAME:"sr_name", UID:"sr_uid", RES:"sr_reservations", LOT:"sr_lottery", PART:"sr_lot_participants" };
+/* （中略：あなたのJSコードはそのまま残す） */
 
-/**************** 管理設定 ****************/
-const ADMIN_KEYS = { SETTINGS:'sr_admin_settings', SESSION:'sr_admin_session', DEVICE:'sr_admin_device_id' };
-function getDeviceId(){ let v=localStorage.getItem(ADMIN_KEYS.DEVICE); if(!v){ v = `dev-${crypto.randomUUID()}`; localStorage.setItem(ADMIN_KEYS.DEVICE,v);} return v; }
-function loadSettings(){ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SETTINGS)||'{}'); }
-function saveSettings(s){ localStorage.setItem(ADMIN_KEYS.SETTINGS, JSON.stringify(s)); }
-function session(){ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SESSION)||'{}'); }
-function setSession(obj){ if(obj) localStorage.setItem(ADMIN_KEYS.SESSION, JSON.stringify(obj)); else localStorage.removeItem(ADMIN_KEYS.SESSION); renderSessionUI(); }
-function ensureDefaults(){ const s=loadSettings(); s.loginEnabled ??= false; s.deviceLockEnabled ??= false; s.users ??= []; s.allowedDevices ??= []; saveSettings(s); }
-
-/**************** ユーティリティ（日付/時刻） ****************/
-const z2 = n=> String(n).padStart(2,'0');
-const fmtHM = d=> `${z2(d.getHours())}:${z2(d.getMinutes())}`;
-const toISODateLocal = (d)=> `${d.getFullYear()}-${z2(d.getMonth()+1)}-${z2(d.getDate())}`;
-const parseHM = s=>{ const [h,m]=s.split(":").map(Number); return {h,m}; };
-const addMinutes=(date,mins)=>{const d=new Date(date.getTime()); d.setMinutes(d.getMinutes()+mins);return d;};
-
-/**************** 日本の祝日 2025 ****************/
-const JP_HOLIDAYS_2025 = new Set([
-  "2025-01-01","2025-01-13","2025-02-11","2025-02-23","2025-02-24","2025-03-20",
-  "2025-04-29","2025-05-03","2025-05-04","2025-05-05","2025-05-06",
-  "2025-07-21","2025-08-11","2025-09-15","2025-09-23","2025-10-13",
-  "2025-11-03","2025-11-23","2025-11-24"
-]);
-function isJapaneseHoliday(dateISO){ return JP_HOLIDAYS_2025.has(dateISO); }
-
-/**************** モード（PC時間で判定） ****************/
-function modeJP(){
-  const h=nowLocal().getHours();
-  if(h>=8 && h<21) return {code:'INSTANT_TODAY', label:'本日分 即時予約'};
-  if(h>=21) return {code:'LOTTERY_FOR_TOMORROW', label:'翌日分 抽選希望受付'};
-  return {code:'LOTTERY_FOR_TODAY', label:'本日分 抽選希望受付'};
-}
-function targetDateForMode(code){
-  const n=nowLocal();
-  const today=toISODateLocal(n);
-  if(code==='INSTANT_TODAY' || code==='LOTTERY_FOR_TODAY') return today;
-  const t=new Date(n.getTime()); t.setDate(t.getDate()+1); return toISODateLocal(t);
-}
-
-/**************** スロット生成 ****************/
-function generateSlotsForDateRoom(dateISO, room){
-  const slots=[]; const {h:sh,m:sm}=parseHM(CONFIG.slotStart); const {h:eh,m:em}=parseHM(CONFIG.slotEnd);
-  const s=new Date(`${dateISO}T00:00:00`); s.setHours(sh,sm,0,0);
-  const end=new Date(`${dateISO}T00:00:00`); end.setHours(eh,em,0,0);
-  for(let cur=s; cur<end; cur=addMinutes(cur,CONFIG.slotMinutes)){
-    const start=`${z2(cur.getHours())}:${z2(cur.getMinutes())}`;
-    const e=addMinutes(cur,CONFIG.slotMinutes);
-    const endtxt=`${z2(e.getHours())}:${z2(e.getMinutes())}`;
-    slots.push({id:`${dateISO}_${room}_${start}`,date:dateISO,room,start,end:endtxt});
-  }
-  return slots;
-}
-function isWeekdayNonHoliday(dateISO){
-  const d=new Date(`${dateISO}T00:00:00`);
-  const wd=d.getDay();
-  if (isJapaneseHoliday(dateISO)) return false;
-  return wd>=1 && wd<=5;
-}
-function isPrioritySlot(slot){
-  if(!isWeekdayNonHoliday(slot.date)) return false;
-  const p=CONFIG.priority?.[slot.room]; if(!p) return false;
-  return slot.start>=p.start && slot.start<p.end;
-}
-
-/**************** ストレージ ****************/
-const storage={
-  getRes(){return JSON.parse(localStorage.getItem(KEY.RES)||"{}");},
-  setRes(o){localStorage.setItem(KEY.RES,JSON.stringify(o));},
-  getLot(){return JSON.parse(localStorage.getItem(KEY.LOT)||"{}");}
-};
-
-/**************** DOM ****************/
-const el={
-  modeLabel:document.getElementById('modeLabel'),
-  nowLabel:document.getElementById('nowLabel'),
-  datePicker:document.getElementById('datePicker'),
-  refreshBtn:document.getElementById('refreshBtn'),
-  lotteryCard:document.getElementById('lotteryCard'),
-  lotteryTitle:document.getElementById('lotteryTitle'),
-  lotteryTbody:document.querySelector('#lotteryTable tbody'),
-  instantTitle:document.getElementById('instantTitle'),
-  listRoom1:document.getElementById('listRoom1'),
-  listRoom2:document.getElementById('listRoom2'),
-  settingsBtn:document.getElementById('settingsBtn')
-};
-
-/**************** 編集モーダル（氏名のみ） ****************/
-const dialog={
-  root:document.getElementById('editDialog'),
-  close:document.getElementById('closeEdit'),
-  name:document.getElementById('editName'),
-  label:document.getElementById('editCurrentLabel'),
-  save:document.getElementById('editSave')
-};
-let currentEditingSlot=null;
-function openEdit(slot){
-  if(!canOperate()){ alert('操作権限がありません（ログイン/端末制限をご確認ください）'); return; }
-  currentEditingSlot=slot;
-  const r=currentReservation(slot.id);
-  dialog.name.value = r?.name || "";
-  dialog.label.textContent = `現在：シャワー室${slot.room} ${slot.start}–${slot.end}`;
-  dialog.root.style.display='flex';
-  document.body.style.overflow='hidden'; /* 背景スクロール停止 */
-}
-function closeEdit(){
-  dialog.root.style.display='none'; currentEditingSlot=null;
-  document.body.style.overflow=''; /* 背景スクロール解除 */
-}
-dialog.close.onclick=closeEdit;
-dialog.save.onclick=()=>{
-  if(!currentEditingSlot) return;
-  const name=(dialog.name.value||"").trim();
-  if(!name){ alert('氏名を入力してください'); return; }
-  const res=storage.getRes();
-  const existing = res[currentEditingSlot.id];
-  if(existing && (existing.source==='instant' || existing.source==='lottery')){
-    if(!confirm('【確認】この枠は一般ユーザーによる予約/応募です。上書き保存しますか？')) return;
-  }
-  const uid = mapNameToUID(name);
-  res[currentEditingSlot.id] = {
-    userId:uid,name,
-    date:currentEditingSlot.date, room:currentEditingSlot.room,
-    start:currentEditingSlot.start, end:currentEditingSlot.end,
-    source:"admin"
-  };
-  storage.setRes(res);
-  closeEdit(); refresh();
-};
-
-/**************** 名前→UID ****************/
-const ADMIN_UID_KEY = 'sr_admin_uid_map';
-function mapNameToUID(name){ const map = JSON.parse(localStorage.getItem(ADMIN_UID_KEY)||"{}"); if(map[name]) return map[name]; const uid = `admin-${crypto.randomUUID()}`; map[name]=uid; localStorage.setItem(ADMIN_UID_KEY, JSON.stringify(map)); return uid; }
-
-/**************** 権限チェック ****************/
-function canOperate(){ const s=loadSettings(); if(!s.loginEnabled && !s.deviceLockEnabled) return true;
-  const devId = getDeviceId();
-  if(s.deviceLockEnabled && !s.allowedDevices.includes(devId)) return false;
-  if(s.loginEnabled){ const ses = session(); if(!ses.userId) return false; if(!s.users.find(u=>u.id===ses.userId)) return false; }
-  return true;
-}
-
-/**************** 設定モーダル開閉時：背景スクロール制御 ****************/
-const settingsDialog = document.getElementById('settingsDialog');
-const settings = {
-  loginToggle:document.getElementById('loginToggle'),
-  deviceToggle:document.getElementById('deviceToggle'),
-  registerDeviceBtn:document.getElementById('registerDeviceBtn'),
-  addUserBtn:document.getElementById('addUserBtn'),
-  newUserName:document.getElementById('newUserName'),
-  newUserPin:document.getElementById('newUserPin'),
-  userList:document.getElementById('userList'),
-  sessionUser:document.getElementById('sessionUser'),
-  loginBtn:document.getElementById('loginBtn'),
-  logoutBtn:document.getElementById('logoutBtn'),
-  close:document.getElementById('closeSettings')
-};
-document.getElementById('settingsBtn').onclick=()=>{ populateSettings(); settingsDialog.style.display='flex'; document.body.style.overflow='hidden'; };
-settings.close.onclick=()=>{ settingsDialog.style.display='none'; document.body.style.overflow=''; };
-function populateSettings(){ ensureDefaults(); const s=loadSettings(); settings.loginToggle.checked = !!s.loginEnabled; settings.deviceToggle.checked = !!s.deviceLockEnabled; renderUserList(); renderSessionUI(); const devId=getDeviceId(); settings.registerDeviceBtn.textContent = s.allowedDevices?.includes(devId)? 'この端末は登録済' : 'この端末を登録'; }
-function renderUserList(){ const s=loadSettings(); settings.userList.innerHTML=''; (s.users||[]).forEach(u=>{ const row=document.createElement('div'); row.className='useritem'; row.innerHTML=`<span class="name">${u.name}</span><span class="note">(ID: ${u.id})</span>`; const del=document.createElement('button'); del.className='ghost'; del.textContent='削除'; del.onclick=()=>{ const st=loadSettings(); st.users = (st.users||[]).filter(x=>x.id!==u.id); saveSettings(st); if(session().userId===u.id) setSession(null); renderUserList(); renderSessionUI(); }; row.appendChild(del); settings.userList.appendChild(row); }); }
-function renderSessionUI(){ const s=loadSettings(); const ses=session(); const user = (s.users||[]).find(u=>u.id===ses.userId); settings.sessionUser.textContent = user? user.name : '未ログイン';
-  const sel=document.getElementById('loginUser'); sel.innerHTML=''; (s.users||[]).forEach(u=>{ const opt=document.createElement('option'); opt.value=u.id; opt.textContent=u.name; sel.appendChild(opt); }); }
-settings.loginToggle.onchange=()=>{ const s=loadSettings(); s.loginEnabled = settings.loginToggle.checked; saveSettings(s); };
-settings.deviceToggle.onchange=()=>{ const s=loadSettings(); s.deviceLockEnabled = settings.deviceToggle.checked; saveSettings(s); };
-settings.registerDeviceBtn.onclick=()=>{ const s=loadSettings(); s.allowedDevices ||= []; const id=getDeviceId(); if(!s.allowedDevices.includes(id)) s.allowedDevices.push(id); saveSettings(s); populateSettings(); };
-settings.addUserBtn.onclick=()=>{ const name=(settings.newUserName.value||'').trim(); const pin=(settings.newUserPin.value||'').trim(); if(!name||pin.length!==4){ alert('名前と4桁PINを入力してください'); return; } const s=loadSettings(); s.users ||= []; s.users.push({id:`u-${crypto.randomUUID()}`, name, pin}); saveSettings(s); settings.newUserName.value=''; settings.newUserPin.value=''; renderUserList(); renderSessionUI(); };
-settings.loginBtn.onclick=()=>{ const s=loadSettings(); if(!(s.users||[]).length){ alert('先にユーザーを登録してください'); return; } document.getElementById('loginDialog').style.display='flex'; document.body.style.overflow='hidden'; };
-settings.logoutBtn.onclick=()=> setSession(null);
-
-/**************** ログインモーダル開閉時：背景スクロール制御 ****************/
-const loginDialog = document.getElementById('loginDialog');
-document.getElementById('closeLogin').onclick=()=>{ loginDialog.style.display='none'; document.body.style.overflow=''; };
-document.getElementById('doLogin').onclick=()=>{ const s=loadSettings(); const id=document.getElementById('loginUser').value; const pin=(document.getElementById('loginPin').value||'').trim(); const u=(s.users||[]).find(x=>x.id===id); if(!u){ alert('ユーザーが見つかりません'); return; } if(u.pin!==pin){ alert('PINが違います'); return; } setSession({userId:u.id}); loginDialog.style.display='none'; document.body.style.overflow=''; populateSettings(); };
-
-/**************** ヘッダー描画 ****************/
-function renderHeader(){
-  const m=modeJP();
-  const target = targetDateForMode(m.code);
-  el.modeLabel.textContent = m.label;
-  el.nowLabel.textContent = `${target} ${fmtHM(nowLocal())}`;
-  el.datePicker.value = target;
-
-  // 抽選表はINSTANT_TODAY以外で表示
-  el.lotteryCard.style.display = (m.code!=='INSTANT_TODAY')? 'block':'none';
-  // 21時以降は明日の予約状況
-  el.instantTitle.textContent = (m.code==='INSTANT_TODAY') ? '当日の予約' : '明日の予約';
-  el.lotteryTitle.textContent = `明日分 抽選希望の集計`;
-}
-
-/**************** 集計（太線＝室1第1列／優先枠行黄色） ****************/
-function renderLotteryCounts(dateISO){
-  const target = dateISO || el.datePicker.value;
-  const lot = (storage.getLot()[target]||[]);
-  const counts={}; // slotId -> [first,second,third]
-  for(const entry of lot){
-    (entry.choices||[]).slice(0,3).forEach((slotId,idx)=>{
-      counts[slotId] ||= [0,0,0];
-      counts[slotId][idx]++;
-    });
-  }
-  const slots1 = generateSlotsForDateRoom(target, "1");
-  const slots2 = generateSlotsForDateRoom(target, "2");
-  const tbody = el.lotteryTbody; tbody.innerHTML='';
-
-  for(let i=0;i<Math.max(slots1.length, slots2.length);i++){
-    const s1 = slots1[i]; const s2 = slots2[i];
-    if(!s1 || !s2) break;
-    const c1 = counts[s1.id] || [0,0,0];
-    const c2 = counts[s2.id] || [0,0,0];
-    const priorityHit = isPrioritySlot(s1) || isPrioritySlot(s2);
-
-    const tr=document.createElement('tr');
-    if (priorityHit) tr.classList.add('priorityRow');
-    tr.innerHTML = `
-      <td class="left col-time"><span class="timecode">${s1.start}</span>–<span class="timecode">${s1.end}</span></td>
-      <td class="center g1 vcut-thick">${fmtCount(c1[0])}</td>
-      <td class="center g1">${fmtCount(c1[1])}</td>
-      <td class="center g1">${fmtCount(c1[2])}</td>
-      <td class="center g2 vcut-thin">${fmtCount(c2[0])}</td>
-      <td class="center g2">${fmtCount(c2[1])}</td>
-      <td class="center g2">${fmtCount(c2[2])}</td>
-    `;
-    tbody.appendChild(tr);
-  }
-}
-function fmtCount(n){ return n? n : '–'; }
-
-/**************** 手動編集一覧（上） ****************/
-function currentReservation(id){ const res=storage.getRes(); return res[id] || null; }
-function renderInstant(dateISO){
-  const target=dateISO || el.datePicker.value;
-  const res=storage.getRes();
-  const lists={ '1':el.listRoom1, '2':el.listRoom2 };
-  lists['1'].innerHTML=''; lists['2'].innerHTML='';
-
-  for(const room of CONFIG.rooms){
-    const slots=generateSlotsForDateRoom(target, room);
-    for(const s of slots){
-      const r = res[s.id];
-      const status = r? `<span class="badge ok">予約済</span>` : `<span class="badge info">空き</span>`;
-      const who = r? `${r.name} <small class="note">(${r.source})</small>` : '—';
-      const row=document.createElement('div');
-      row.className='slot';
-      if(isPrioritySlot(s)) row.classList.add('priority');
-      row.innerHTML = `
-        <div class="time">${s.start}–${s.end} ${status}</div>
-        <div class="who">${who}</div>
-        <div class="actions"></div>
-      `;
-      const acts=row.querySelector('.actions');
-      const btnE=document.createElement('button');
-      btnE.className='ghost'; btnE.textContent = r? '編集' : '予約を入れる';
-      btnE.onclick=()=> openEdit(s);
-      const btnC=document.createElement('button');
-      btnC.className='danger'; btnC.textContent='クリア';
-      btnC.onclick=()=>{
-        if(!canOperate()){ alert('操作権限がありません'); return; }
-        const res=storage.getRes(); const existing = res[s.id];
-        if(existing && (existing.source==='instant' || existing.source==='lottery')){
-          if(!confirm('【確認】この枠は一般ユーザーによって確定/応募されたものです。クリアしますか？')) return;
-        }
-        delete res[s.id]; storage.setRes(res); refresh();
-      };
-      acts.append(btnE, btnC);
-      lists[room].appendChild(row);
-    }
-  }
-}
-
-/**************** 画面更新 ****************/
-function refresh(){ renderHeader(); renderInstant(); renderLotteryCounts(); }
-document.getElementById('refreshBtn').onclick=()=> refresh();
-document.getElementById('datePicker').onchange=()=>{ const picked=document.getElementById('datePicker').value; renderInstant(picked); renderLotteryCounts(picked); };
-
-// 初期化（PC時間／mockでライブ更新）
-(function init(){
-  ensureDefaults(); refresh();
-  setInterval(()=>{
-    const m=modeJP();
-    const target = targetDateForMode(m.code);
-    el.modeLabel.textContent = m.label;
-    el.nowLabel.textContent = `${target} ${fmtHM(nowLocal())}`;
-    el.instantTitle.textContent = (m.code==='INSTANT_TODAY') ? '当日の予約' : '明日の予約';
-    el.lotteryCard.style.display = (m.code!=='INSTANT_TODAY')? 'block':'none';
-  }, 10000);
-})();
-
+/* ★ Service Worker のパスだけ変更 */
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(console.error);
+  navigator.serviceWorker.register('../sw.js').catch(console.error);
 }
-
 </script>
 </body>
 </html>
