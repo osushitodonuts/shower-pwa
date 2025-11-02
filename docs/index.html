@@ -1,13 +1,943 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta http-equiv="refresh" content="0; URL='./user.html'" />
-  <title>シャワー室予約</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <meta name="theme-color" content="#1e40af">
+    <link rel="apple-touch-icon" href="./newicons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./newicons/icon-180.png">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>シャワー室予約</title>
+<style>
+:root{
+  --bg:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+  --primary:#1e40af; --primary-weak:#eff6ff; --ok:#16a34a;
+  --priority-bg:#faf5ff; --priority-br:#d8cafe; --priority-text:#6d28d9;
+  --panel:#f0f9ff;
+  --radius:14px; --space:16px; --touch:46px; --fs:clamp(14px,1.6vw,16px);
+  --active-bg:#dbeafe; --active-outline:#93c5fd66; --active-border:#3b82f6;
+  --shadow:0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
+  --confirm-bg:#d6e8ff; /* 確定カードは少し濃い青 */
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:var(--fs)}
+.hero{background:#ffffff;border-bottom:1px solid var(--line)}
+.hero-inner{max-width:1100px;margin:0 auto;padding:24px var(--space) 18px;display:grid;grid-template-columns:1fr;gap:12px;align-items:center}
+.brand{display:flex;flex-direction:column;align-items:center;text-align:center}
+.brand .title{font-size:clamp(28px,5.6vw,44px);font-weight:900;letter-spacing:.02em}
+.brand .subtitle{margin-top:8px;color:var(--muted);font-size:14px;line-height:1.8;max-width:820px;text-align:left}
+.rule{margin-top:12px;display:grid;gap:6px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.rule .lead{color:var(--text);background:#fff;border-radius:8px;padding:4px 2px;font-size:13px;margin-bottom:2px}
+.rule .nowtag{display:block;color:var(--text);background:var(--panel);border:1px solid #bae6fd;border-radius:8px;padding:8px 12px;margin-top:0;line-height:1.5}
+.rule small{display:none}
+.container{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.card h3{margin:0;padding:14px 14px;border-bottom:1px solid var(--line);font-size:18px;text-align:center}
+.section{padding:12px;display:grid;gap:10px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.formwrap{background:var(--panel)!important;border:1px solid #bae6fd;border-top-left-radius:0;border-top-right-radius:0;border-bottom-left-radius:12px;border-bottom-right-radius:12px;padding:12px;display:grid;gap:12px;margin-top:-1px}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:6px 10px;border-radius:10px;background:#f8fafc;border:1px dashed var(--line);color:#334155;font-size:12px}
+input{background:#fff;border:1px solid var(--line);border-radius:10px;color:#0f172a;padding:10px;min-height:var(--touch);width:100%}
+.btn{cursor:pointer;border:1px solid var(--line);background:#fff;color:#111827;border-radius:10px;padding:10px 12px;min-height:var(--touch);transition:transform .05s, box-shadow .15s}
+.btn:hover{background:#f8fafc}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:#2563eb;border-color:#1d4ed8;color:#fff}
+.btn.success{background:#16a34a;border-color:#15803d;color:#fff}
+.btn.ghost{background:#fff;border-color:#d1d5db;color:#111}
+.small{font-size:12px;color:#374151}
+.note{font-size:12px;color:#6b7280;text-align:center}
+.stage h4{margin:0 0 6px 0;font-size:13px;color:#334155}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:12px;text-align:center;background:#fff;min-height:var(--touch);transition:box-shadow .15s, background .15s, border-color .15s, transform .05s}
+.chip:hover{background:#f1f5f9}
+.chip:active{transform:translateY(1px)}
+.chip.active{background:var(--active-bg);border-color:var(--active-border);box-shadow:0 0 0 3px var(--active-outline)}
+.chip.priority{background:var(--priority-bg);border-color:var(--priority-br);color:#6d28d9}
+.chip .subtxt{display:block;font-size:11px;color:#6d28d9;margin-top:4px}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.slot{border:1px solid var(--line);border-radius:12px;background:#fff;padding:10px;display:flex;flex-direction:column;gap:6px;min-height:90px;transition:background .15s, outline .15s, border-color .15s}
+.slot .time{font-weight:700}
+.slot .status{margin-top:auto;font-size:12px}
+.slot .actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.slot.selected{background:#eef2ff;border-color:#93c5fd;outline:2px solid #60a5fa}
+.slot.booked{opacity:.6}
+.slot.priority{background:var(--priority-bg);border-color:var(--priority-br)}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:999px;font-size:12px;background:#fff}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px;display:flex;align-items:center;gap:10px;position:relative;touch-action:none}
+.item.confirmed{background:var(--confirm-bg)}
+#confirmedCard .item{ background: var(--confirm-bg) !important; }
+.item .handle{cursor:grab;border:1px dashed #cbd5e1;border-radius:8px;padding:6px 8px;font-size:12px;color:#475569;background:#f8fafc}
+.item .rank{min-width:2.5em;text-align:center;font-weight:700}
+.item .label{display:flex;flex-direction:column;gap:2px;min-width:0}
+.item .date{font-size:12px;color:#1f2937}
+.item .timeinfo{font-size:12px;color:#374151;white-space:nowrap}
+.item .fill{flex:1;min-width:0}
+.item .rm{margin-left:auto}
+.item.dragging{opacity:.95;box-shadow:0 8px 24px rgba(15,23,42,.12);cursor:grabbing}
+.placeholder{border:2px dashed #a5b4fc;border-radius:10px;height:44px;background:#f8faff}
+#finalizeWrap{margin-top:12px;text-align:center}
+#finalizeBtn{margin-top:8px;min-width:280px;box-shadow:0 8px 22px rgba(37,99,235,.28);font-weight:700}
+@media (max-width:720px){ .chips{grid-template-columns:repeat(1,1fr)} .slots{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:420px){ .slots{grid-template-columns:1fr} }
+</style>
 </head>
 <body>
-  <p>読み込み中です...</p>
-  <script>location.href="./user.html";</script>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="brand">
+      <div class="title">シャワー室予約</div>
+      <div class="subtitle">
+        ・9:00–21:00 の 20 分枠です。<br>
+        ・21:00–翌8:00 は抽選応募受付時間です（第3希望まで）。8:00 以降は空き枠の即時予約が可能です。<br>
+        ・平日午後の「お預かり優先枠」は、保育士の付き添いが必要な方が優先の枠です。
+        <div class="rule">
+          <div class="lead" id="leadLine">ただいまの時間（—）は</div>
+          <div class="nowtag" id="nowTag">—</div>
+          <small id="nowJST">—</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <!-- 確定枠 -->
+  <section class="card" id="confirmedCard" style="display:none">
+    <h3>確定している枠</h3>
+    <div class="section">
+      <div class="list" id="confirmedList"></div>
+    </div>
+  </section>
+
+  <!-- 予約カード（20:40以降は丸ごと非表示） -->
+  <section class="card" id="reserveCard">
+    <h3>予約</h3>
+    <div class="section formwrap">
+      <div class="row" style="gap:12px">
+        <div style="flex:1;min-width:260px">
+          <div class="small">氏名（初回のみ / <b>非公開です</b>）</div>
+          <div class="row" style="gap:8px">
+            <input id="displayName" placeholder="例：山田太郎" />
+            <button class="btn primary" id="saveName">氏名を保存</button>
+            <button class="btn ghost" id="clearName">この端末から削除</button>
+          </div>
+          <div class="note" id="nameHint">未保存</div>
+        </div>
+      </div>
+
+      <div class="pills">
+        <span class="pill">対象日：<b id="targetDateLabel">—</b></span>
+        <span class="pill">選択中：<b id="selectionTrail">—</b></span>
+      </div>
+
+      <div class="note" id="blockedNote" style="display:none"></div>
+
+      <div class="stage" id="stage0">
+        <h4>① シャワー室を選ぶ</h4>
+        <div class="chips" id="roomChips"></div>
+      </div>
+
+      <div class="stage" id="stage1" style="display:none">
+        <h4>② 午前・午後を選ぶ</h4>
+        <div class="chips" id="amPmChips"></div>
+      </div>
+
+      <div class="stage" id="stage2" style="display:none">
+        <h4>③ 時間（1時間ごと）を選ぶ</h4>
+        <div class="chips" id="hourChips"></div>
+      </div>
+
+      <div class="stage" id="stage3" style="display:none">
+        <div class="row">
+          <h4 style="margin-right:8px">④ 20分枠を選ぶ</h4>
+          <span class="small" id="stageLabel"></span>
+        </div>
+        <div class="note" id="priorityNote" style="display:none">保育士の付き添いが必要な方の優先枠です（平日のみ）。</div>
+        <div class="slots" id="slots"></div>
+      </div>
+
+      <!-- 抽選UI（即時時間は常に非表示） -->
+      <div class="stage" id="wishStage">
+        <h4>希望順位（長押しで順位を変えられます）</h4>
+        <div class="list" id="wishList"></div>
+      </div>
+      <div id="finalizeWrap">
+        <div class="note" id="finalizeHint">第１〜第３まで選ぶと確定できます。</div>
+        <button class="btn primary" id="finalizeBtn">抽選希望を確定する</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ========= 設定 ========= */
+const CONFIG = {
+  rooms: ["1","2"],
+  slotStart: "09:00",
+  slotEnd:   "21:00",
+  slotMinutes: 20,
+  tz: "Asia/Tokyo",
+  priority: { "1": { start: "14:00", end: "16:00" }, "2": { start: "13:00", end: "16:00" } }
+};
+/* ========= キー ========= */
+const KEY = { NAME:"sr_name", UID:"sr_uid", RES:"sr_reservations", LOT:"sr_lottery", PART:"sr_lot_participants" };
+const KEY_CONFIRMED_PREFIX = "sr_confirmed";
+/* ========= 時刻モック（任意） ========= */
+// ?mock=2025-11-02T20:00:00+09:00 で表示を固定できる
+const MOCK_PARAM = new URLSearchParams(location.search).get('mock');
+
+/* ========= 日本の祝日（簡易計算＋振替＋国民の休日） ========= */
+// 春分・秋分の近似式（1980〜2099を想定）
+function vernalEquinoxDay(year){
+  if(year<=1979||year>=2100){ return 20; }
+  return Math.floor(20.8431 + 0.242194*(year-1980) - Math.floor((year-1980)/4));
+}
+function autumnalEquinoxDay(year){
+  if(year<=1979||year>=2100){ return 23; }
+  return Math.floor(23.2488 + 0.242194*(year-1980) - Math.floor((year-1980)/4));
+}
+// 第n月曜
+function nthMonday(year, month, n){
+  const d = new Date(`${year}-${String(month).padStart(2,'0')}-01T00:00:00+09:00`);
+  let offset = (1 - d.getDay() + 7) % 7; // 1=Mon
+  return 1 + offset + (n-1)*7;
+}
+// その年の祝日セットを構築
+function buildJapaneseHolidaySet(year){
+  const s = new Set();
+  const add = (m,d)=> s.add(`${year}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+
+  // 固定日
+  add(1,1); add(2,11); add(2,23);
+  add(4,29); add(5,3); add(5,4); add(5,5);
+  add(8,11);
+  add(11,3); add(11,23);
+
+  // ハッピーマンデー
+  add(1, nthMonday(year,1,2));   // 成人の日
+  add(7, nthMonday(year,7,3));   // 海の日
+  add(9, nthMonday(year,9,3));   // 敬老の日
+  add(10, nthMonday(year,10,2)); // スポーツの日
+
+  // 分点
+  add(3, vernalEquinoxDay(year));
+  add(9, autumnalEquinoxDay(year));
+
+  // 振替休日（日曜の祝日の翌平日）
+  for(let m=1; m<=12; m++){
+    for(let d=1; d<=31; d++){
+      const iso = `${year}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dt = new Date(`${iso}T00:00:00+09:00`);
+      if (isNaN(dt)) continue;
+      if (!s.has(iso)) continue;
+      if (dt.getDay() !== 0) continue;
+      let nd = new Date(dt.getTime());
+      while(true){
+        nd.setDate(nd.getDate()+1);
+        const iso2 = `${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(nd.getDate()).padStart(2,'0')}`;
+        const wd = nd.getDay();
+        if (wd===0 || wd===6) continue;
+        if (!s.has(iso2)) { s.add(iso2); break; }
+      }
+    }
+  }
+  // 国民の休日（祝日に挟まれた平日）
+  for(let m=1; m<=12; m++){
+    for(let d=1; d<=31; d++){
+      const dt = new Date(`${year}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}T00:00:00+09:00`);
+      if (isNaN(dt)) continue;
+      const wd = dt.getDay();
+      const iso = `${year}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      if (s.has(iso) || wd===0 || wd===6) continue;
+      const prev = new Date(dt.getTime()); prev.setDate(dt.getDate()-1);
+      const next = new Date(dt.getTime()); next.setDate(dt.getDate()+1);
+      const isoPrev = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}-${String(prev.getDate()).padStart(2,'0')}`;
+      const isoNext = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}-${String(next.getDate()).padStart(2,'0')}`;
+      if (s.has(isoPrev) && s.has(isoNext)) s.add(iso);
+    }
+  }
+  return s;
+}
+const JP_HOLIDAYS_CACHE = new Map();
+function isJapaneseHolidayISO(dateISO){
+  const [y] = dateISO.split('-').map(Number);
+  if (!JP_HOLIDAYS_CACHE.has(y)) JP_HOLIDAYS_CACHE.set(y, buildJapaneseHolidaySet(y));
+  return JP_HOLIDAYS_CACHE.get(y).has(dateISO);
+}
+
+/* ========= Util ========= */
+const nowJST = ()=> {
+  if (MOCK_PARAM) return new Date(MOCK_PARAM);
+  return new Date(new Date().toLocaleString('en-US', { timeZone: CONFIG.tz }));
+};
+const z2 = (n)=> String(n).padStart(2,'0');
+function fmtNowHM(){ const d=nowJST(); return `${z2(d.getHours())}:${z2(d.getMinutes())}`; }
+const toISODate = (d) => {
+  const y=new Intl.DateTimeFormat('en-CA',{timeZone:CONFIG.tz,year:'numeric'}).format(d);
+  const m=new Intl.DateTimeFormat('en-CA',{timeZone:CONFIG.tz,month:'2-digit'}).format(d);
+  const da=new Intl.DateTimeFormat('en-CA',{timeZone:CONFIG.tz,day:'2-digit'}).format(d);
+  return `${y}-${m}-${da}`;
+};
+const parseHM = (s)=>{ const [h,m]=s.split(":").map(Number); return {h,m}; };
+const addMinutes=(date,mins)=>{const d=new Date(date.getTime()); d.setMinutes(d.getMinutes()+mins);return d;};
+/* ★ 祝日も休日とみなす平日判定（ここだけ差し替え済み） */
+function isWeekday(dateISO){
+  const dt = new Date(`${dateISO}T00:00:00+09:00`);
+  const wd = dt.getDay();
+  if (wd === 0 || wd === 6) return false;            // 土日
+  if (isJapaneseHolidayISO(dateISO)) return false;   // 祝日（振替・国民の休日含む）
+  return true;
+}
+function confirmedKey(uid, dateISO){ return `${KEY_CONFIRMED_PREFIX}_${uid}_${dateISO}`; }
+function isConfirmed(uid, dateISO){ return localStorage.getItem(confirmedKey(uid,dateISO)) === "1"; }
+function setConfirmed(uid, dateISO, flag){ if(flag){ localStorage.setItem(confirmedKey(uid,dateISO), "1"); } else{ localStorage.removeItem(confirmedKey(uid,dateISO)); } }
+
+/* ========= Storage ========= */
+const storage = {
+  getName(){return localStorage.getItem(KEY.NAME)||"";},
+  setName(v){localStorage.setItem(KEY.NAME,v);},
+  clearName(){localStorage.removeItem(KEY.NAME);},
+  getUID(){let v=localStorage.getItem(KEY.UID); if(!v){v=crypto.randomUUID(); localStorage.setItem(KEY.UID,v);} return v;},
+  getRes(){return JSON.parse(localStorage.getItem(KEY.RES)||"{}");},
+  setRes(o){localStorage.setItem(KEY.RES,JSON.stringify(o));},
+  getLot(){return JSON.parse(localStorage.getItem(KEY.LOT)||"{}");},
+  setLot(o){localStorage.setItem(KEY.LOT,JSON.stringify(o));},
+  getPart(){return JSON.parse(localStorage.getItem(KEY.PART)||"{}");},
+  setPart(o){localStorage.setItem(KEY.PART,JSON.stringify(o));}
+};
+
+/* ========= モード ========= */
+function currentMode(){
+  const h=nowJST().getHours();
+  if (h>=8 && h<21) return "INSTANT_TODAY";
+  if (h>=21) return "LOTTERY_FOR_TOMORROW";
+  return "LOTTERY_FOR_TODAY";
+}
+function targetDateForMode(mode){
+  const n=nowJST(); const today=toISODate(n);
+  if (mode==="INSTANT_TODAY"||mode==="LOTTERY_FOR_TODAY") return today;
+  const t=new Date(n.getTime()); t.setDate(t.getDate()+1);
+  return toISODate(t);
+}
+function endOfDayBlocked(){
+  // 20:40 以降は「本日分終了」
+  return currentMode()==="INSTANT_TODAY" && fmtNowHM()>="20:40";
+}
+
+/* ========= DOM ========= */
+const el = {
+  reserveCard: document.getElementById('reserveCard'),
+  confirmedCard: document.getElementById('confirmedCard'),
+  confirmedList: document.getElementById('confirmedList'),
+  displayName: document.getElementById('displayName'),
+  saveName: document.getElementById('saveName'),
+  clearName: document.getElementById('clearName'),
+  nameHint: document.getElementById('nameHint'),
+  leadLine: document.getElementById('leadLine'),
+  nowTag: document.getElementById('nowTag'),
+  targetDate: document.getElementById('targetDateLabel'),
+  selectionTrail: document.getElementById('selectionTrail'),
+  blockedNote: document.getElementById('blockedNote'),
+  roomChips: document.getElementById('roomChips'),
+  amPmChips: document.getElementById('amPmChips'),
+  hourChips: document.getElementById('hourChips'),
+  slots: document.getElementById('slots'),
+  stage0: document.getElementById('stage0'),
+  stage1: document.getElementById('stage1'),
+  stage2: document.getElementById('stage2'),
+  stage3: document.getElementById('stage3'),
+  stageLabel: document.getElementById('stageLabel'),
+  priorityNote: document.getElementById('priorityNote'),
+  wishStage: document.getElementById('wishStage'),
+  wishList: document.getElementById('wishList'),
+  finalizeWrap: document.getElementById('finalizeWrap'),
+  finalizeBtn: document.getElementById('finalizeBtn'),
+  finalizeHint: document.getElementById('finalizeHint'),
+};
+
+/* ========= 状態 ========= */
+const state = { room: null, ampm: null, hour: null };
+
+/* ========= 初期化 ========= */
+function init(){
+  const nm=storage.getName();
+  if (nm){ el.displayName.value=nm; el.nameHint.textContent="保存済み（以後入力不要）"; }
+  el.clearName.onclick=()=>{ storage.clearName(); alert("この端末に保存された氏名を削除しました。"); location.reload(); };
+
+  // シャワー室
+  el.roomChips.innerHTML = `
+    <button class="chip" data-room="1">シャワー室１（向かって左）</button>
+    <button class="chip" data-room="2">シャワー室２（向かって右）</button>`;
+  el.roomChips.querySelectorAll('.chip').forEach(btn=>{
+    btn.onclick=()=>{ state.room=btn.dataset.room; state.ampm=null; state.hour=null; updateTrail(); highlightChips(); buildAmPmChips(); clearSlots(); showStage(1); };
+  });
+
+  el.saveName.onclick=()=>{
+    const v=(el.displayName.value||"").trim();
+    if(!v){ alert("氏名を入力してください。"); return; }
+    storage.setName(v);
+    el.nameHint.textContent="保存しました。以後は自動で利用できます。";
+  };
+
+  refreshHeader();
+  setInterval(()=>{ refreshHeader(); autoLotteryTick(); }, 10000);
+
+  renderConfirmed();
+  renderWishes();
+  updateTrail();
+  bindFinalize();
+  showLotteryPopupIfNeeded();
+}
+
+/* ========= Header & 可視性 ========= */
+function refreshHeader(){
+  el.leadLine.textContent = `ただいまの時間（${fmtNowHM()}）は`;
+
+  const mode=currentMode();
+  const tdate=targetDateForMode(mode);
+  el.targetDate.textContent = tdate;
+
+  if (endOfDayBlocked()){
+    el.nowTag.textContent = "本日分の予約は終了しました。21時以降に明日の分の抽選希望登録ができます。";
+    el.reserveCard.style.display = 'none';
+    el.confirmedCard.style.display = 'none';
+    return;
+  }
+
+  if (mode==="INSTANT_TODAY"){
+    el.nowTag.innerHTML = "空き枠の即時予約の時間です。<br>今すぐに予約が確定します。";
+  }else if (mode==="LOTTERY_FOR_TODAY"){
+    el.nowTag.innerHTML = `「本日分」の抽選応募受付時間です（第3希望まで）。<br>8:00以降に抽選結果を本サイトで確認できます。`;
+  }else{
+    el.nowTag.innerHTML = `「翌日分」の抽選応募受付時間です（第3希望まで）。<br>翌朝8:00以降に抽選結果を本サイトで確認できます。`;
+  }
+
+  el.reserveCard.style.display = 'block';
+
+  // 即時予約の時間は抽選UIを常に非表示
+  const showLotteryUI = (mode !== "INSTANT_TODAY");
+  el.wishStage.style.display = showLotteryUI ? "block" : "none";
+  el.finalizeWrap.style.display = showLotteryUI ? "block" : "none";
+
+  // 抽選時間のみ、確定枠がある間は選択UIを隠す
+  const hasConfirmed = hasConfirmedForTargetDate();
+  const blockSelection = (!showLotteryUI) ? false : (hasConfirmed);
+  updateSelectionVisibility(blockSelection);
+
+  renderConfirmed();
+  renderWishes();
+  updateFinalizeUI();
+}
+function hideAllSelectionStages(){
+  [el.stage0, el.stage1, el.stage2, el.stage3].forEach(n=> n.style.display='none');
+}
+function hasConfirmedForTargetDate(){
+  const uid=storage.getUID();
+  const tdate=targetDateForMode(currentMode());
+  const items=Object.values(storage.getRes()).filter(r=> r.userId===uid && r.date===tdate);
+  return items.length>0;
+}
+function updateSelectionVisibility(block){
+  if (block){
+    el.blockedNote.style.display='block';
+    el.blockedNote.textContent = '現在、この日の予約は確定しています。変更する場合は上部の「予約取り消し」を行い、再度お選びください。';
+    hideAllSelectionStages();
+  }else{
+    el.blockedNote.style.display='none';
+    el.stage0.style.display='block';
+    el.stage1.style.display = state.room ? 'block':'none';
+    el.stage2.style.display = (state.room && state.ampm) ? 'block':'none';
+    el.stage3.style.display = (state.room && state.ampm && state.hour!=null) ? 'block':'none';
+  }
+}
+
+/* ========= ステージ操作 ========= */
+function showStage(idx){
+  el.stage0.style.display = (idx>=0)?"block":"none";
+  el.stage1.style.display = (idx>=1)?"block":"none";
+  el.stage2.style.display = (idx>=2)?"block":"none";
+  el.stage3.style.display = (idx>=3)?"block":"none";
+}
+function updateTrail(){
+  const parts=[];
+  if(state.room) parts.push(`シャワー室${state.room}`);
+  if(state.ampm) parts.push(state.ampm==="am"?"午前":"午後");
+  if(state.hour!=null) parts.push(`${String(state.hour).padStart(2,'0')}:00台`);
+  el.selectionTrail.textContent = parts.length? parts.join(" / ") : "—";
+}
+function highlightChips(){
+  el.roomChips.querySelectorAll('.chip').forEach(b=> b.classList.toggle('active', b.dataset.room===state.room));
+  el.amPmChips.querySelectorAll('.chip').forEach(b=> b.classList.toggle('active', b.dataset.ampm===state.ampm));
+}
+function clearSlots(){ el.stageLabel.textContent=""; el.priorityNote.style.display="none"; el.slots.innerHTML=""; }
+
+/* ========= AM/PM（13:00以降は午前を隠す） ========= */
+function buildAmPmChips(){
+  const mode=currentMode();
+  const tdate=targetDateForMode(mode);
+  const todayISO = toISODate(nowJST());
+  const nowHM = fmtNowHM();
+  const showAM = !(tdate===todayISO && nowHM>="13:00"); // 今日で13:00以降→午前は出さない
+  const amBtn = showAM ? `<button class="chip" data-ampm="am">午前（9:00–12:59）</button>` : "";
+  const pmBtn = `<button class="chip" data-ampm="pm">午後（13:00–21:00）</button>`;
+  el.amPmChips.innerHTML = amBtn + pmBtn;
+  el.amPmChips.querySelectorAll('.chip').forEach(btn=>{
+    btn.onclick=()=>{ state.ampm=btn.dataset.ampm; state.hour=null; updateTrail(); highlightChips(); buildHourChips(); clearSlots(); showStage(2); };
+  });
+}
+
+/* ========= 優先判定（祝日除外された平日のみ適用） ========= */
+function inPriorityHour(room, hour, dateISO){
+  if(!isWeekday(dateISO)) return false;
+  const p=CONFIG.priority[room]; if(!p) return false;
+  const {h:phs}=parseHM(p.start); const {h:phe, m:phem}=parseHM(p.end);
+  return (hour>=phs) && (hour < phe || (hour===phe && phem>0));
+}
+function isPrioritySlot(s){
+  if(!isWeekday(s.date)) return false;
+  const p=CONFIG.priority[s.room]; if(!p) return false;
+  return s.start >= p.start && s.start < p.end;
+}
+
+/* ========= 1時間チップ（過去を出さない） ========= */
+function buildHourChips(){
+  const mode=currentMode();
+  const tdate=targetDateForMode(mode);
+  const listRaw = (state.ampm==="am") ? [9,10,11,12] : [13,14,15,16,17,18,19,20];
+  const todayISO = toISODate(nowJST());
+  const nowHM = fmtNowHM();
+  const list = (tdate === todayISO)
+    ? listRaw.filter(h => `${z2(h+1)}:00` > nowHM) // 終了時刻が現在より後の時間帯のみ
+    : listRaw;
+  el.hourChips.innerHTML = list.map(h=>{
+    const pri = state.room ? inPriorityHour(state.room, h, tdate) : false;
+    const cls = `chip ${state.hour===h?'active':''} ${pri?'priority':''}`;
+    const label = `${z2(h)}:00`;
+    return `<button class="${cls}" data-hour="${h}">${label}${pri?'<span class="subtxt">※お預かり優先枠（平日のみ）</span>':''}</button>`;
+  }).join('');
+  el.hourChips.querySelectorAll('.chip').forEach(btn=>{
+    btn.onclick=()=>{ state.hour=Number(btn.dataset.hour); updateTrail(); buildSlots(); showStage(3); highlightChips(); };
+  });
+}
+
+/* ========= 20分枠（過去を出さない／確定者は文言変更） ========= */
+function generateSlotsForDateRoom(dateISO, room){
+  const slots=[];
+  const {h:sh,m:sm}=parseHM(CONFIG.slotStart);
+  const {h:eh,m:em}=parseHM(CONFIG.slotEnd);
+  let s=new Date(`${dateISO}T00:00:00+09:00`); s.setHours(sh,sm,0,0);
+  const end=new Date(`${dateISO}T00:00:00+09:00`); end.setHours(eh,em,0,0);
+  while(s<end){
+    const start=`${z2(s.getHours())}:${z2(s.getMinutes())}`;
+    const e=addMinutes(s,CONFIG.slotMinutes);
+    const endtxt=`${z2(e.getHours())}:${z2(e.getMinutes())}`;
+    slots.push({id:`${dateISO}_${room}_${start}`,date:dateISO,room,start,end:endtxt});
+    s=e;
+  }
+  return slots;
+}
+function buildSlots(){
+  const mode=currentMode(); const tdate=targetDateForMode(mode);
+  if(!state.room || state.hour==null){ clearSlots(); return; }
+  if (endOfDayBlocked()){ clearSlots(); return; }
+
+  const all = generateSlotsForDateRoom(tdate, state.room);
+  const hourStart = `${z2(state.hour)}:00`;
+  const hourEnd   = `${z2(state.hour+1)}:00`;
+  let slots = all.filter(s=> s.start>=hourStart && s.start<hourEnd);
+
+  const res=storage.getRes();
+  const priHour = inPriorityHour(state.room, state.hour, tdate);
+  el.stageLabel.textContent = `対象日 ${tdate} / ${hourStart}台`;
+  el.priorityNote.style.display = priHour ? "block":"none";
+
+  el.slots.innerHTML = "";
+  const myChoices = getMyChoicesForDate(tdate);
+  const nowHM = fmtNowHM();
+  const todayISO = toISODate(nowJST());
+  const uid = storage.getUID();
+
+  const myTodayReservation = Object.values(res).find(r=> r.userId===uid && r.date===tdate);
+
+  for(const s of slots){
+    if (tdate === todayISO && s.start <= nowHM) continue; // 過去20分は非表示
+    const booked = !!res[s.id];
+    if ((mode==="LOTTERY_FOR_TODAY" || mode==="LOTTERY_FOR_TOMORROW") && booked) continue;
+
+    const div = document.createElement('div');
+    const inPri = isPrioritySlot(s);
+    const selectedIdx = myChoices.indexOf(s.id);
+    div.className = `slot ${booked?'booked':'open'} ${inPri?'priority':''} ${selectedIdx>=0?'selected':''}`;
+    div.innerHTML = `
+      <div class="time">${s.start}–${s.end}${inPri?'<span class="prioMark"></span>':''}</div>
+      <div class="actions"></div>
+      <div class="status">${
+        (mode==="INSTANT_TODAY" && !booked)?'<span class="badge" style="border-color:#bbf7d0;background:#f0fdf4;color:#166534">空き</span>':''}${
+        (mode==="INSTANT_TODAY" && booked)?'<span class="badge">埋まり</span>':''}
+      </div>
+    `;
+    const act = div.querySelector('.actions');
+    if(!booked){
+      if(mode==="INSTANT_TODAY"){
+        const b=document.createElement('button'); b.className="btn success";
+        b.textContent = myTodayReservation ? "予約を変更する" : "予約する";
+        b.onclick=()=> tryReserveInstant(s, inPri, myTodayReservation ? myTodayReservation.id : null);
+        act.appendChild(b);
+      }else{
+        if(selectedIdx>=0){
+          const tag=document.createElement('span'); tag.className="badge"; tag.style.cssText="border-color:#bae6fd;background:#f0f9ff;color:#075985";
+          tag.textContent=`第${selectedIdx+1}`;
+          const rm=document.createElement('button'); rm.className="btn ghost"; rm.textContent="外す";
+          rm.onclick=()=>{ removeChoice(tdate, s.id); buildSlots(); renderWishes(); updateFinalizeUI(); };
+          act.append(tag, rm);
+        }else{
+          const cur=myChoices.slice();
+          if(cur.length<3){
+            const add=document.createElement('button'); add.className="btn primary"; add.textContent=`第${cur.length+1}に追加`;
+            add.onclick=()=>{ tryAddChoice(tdate, s, inPri); renderWishes(); updateFinalizeUI(); };
+            act.appendChild(add);
+          }else{
+            const full=document.createElement('span'); full.className="note"; full.textContent="※希望は3枠まで";
+            act.appendChild(full);
+          }
+        }
+      }
+    }
+    el.slots.appendChild(div);
+  }
+}
+
+/* ========= 氏名・優先確認 ========= */
+function requireName(){ const name=(el.displayName.value||"").trim(); if(!name){ alert("氏名を保存してください。"); return null; } return name; }
+function confirmPriorityIfNeeded(isPri){ if(!isPri) return true; return confirm("この時間は保育士の付き添いが必要な方の優先枠です。予約を続けますか？"); }
+
+/* ========= 即時予約（置換対応） ========= */
+function tryReserveInstant(slot, isPri, replaceFromId=null){
+  if (endOfDayBlocked()){ alert("本日分の予約は終了しました。"); return; }
+  const name=requireName(); if(!name) return;
+  if(!confirmPriorityIfNeeded(isPri)) return;
+
+  const uid=storage.getUID();
+  const today=toISODate(nowJST());
+  if(slot.date!==today){ alert("当日分のみ予約できます（8:00–21:00）。"); return; }
+
+  const res=storage.getRes();
+  const already = Object.values(res).some(r=> r.date===today && r.userId===uid);
+  if(already && !replaceFromId){ alert("すでに確定枠があります。別枠に変更する場合は空き枠の「予約を変更する」を押してください。"); return; }
+  if(res[slot.id]){ alert("先に埋まりました。更新してください。"); buildSlots(); return; }
+
+  if (replaceFromId && res[replaceFromId]) { delete res[replaceFromId]; }
+
+  res[slot.id]={userId:uid,name,...slot,source:"instant"};
+  storage.setRes(res);
+  alert(replaceFromId ? "予約を変更しました。" : "予約が確定しました。");
+  buildSlots(); renderConfirmed(); refreshHeader();
+}
+
+/* ========= 抽選希望 ========= */
+function getMyChoicesForDate(targetDate){
+  const lot=storage.getLot(); const uid=storage.getUID();
+  const list=lot[targetDate]||[]; const mine=list.find(x=> x.userId===uid);
+  return mine? (mine.choices||[]) : [];
+}
+function setMyChoicesForDate(targetDate, choices){
+  const now = nowJST();
+  const today = toISODate(now);
+  const closeKey = "sr_lottery_closed_"+targetDate;
+  const uid = storage.getUID();
+  setConfirmed(uid, targetDate, false);
+  if (targetDate === today) {
+    if (now.getHours() >= 8 || localStorage.getItem(closeKey)) {
+      alert("本日分の抽選受付は 8:00 で終了しました。");
+      return false;
+    }
+  }
+  const tomorrow = toISODate(new Date(now.getTime()+24*60*60*1000));
+  if (targetDate === tomorrow && now.getHours() < 21) {
+    alert("翌日分の抽選受付は 21:00 からです。");
+    return false;
+  }
+  const lot=storage.getLot();
+  let list=lot[targetDate]||[]; let mine=list.find(x=> x.userId===uid);
+  const name=requireName(); if(!name) return false;
+  if(!mine){ mine={userId:uid,name,choices:[]}; list.push(mine); }
+  mine.name=name; mine.choices=choices.slice(0,3);
+  lot[targetDate]=list; storage.setLot(lot);
+  const part=storage.getPart(); const arr=new Set(part[targetDate]||[]); arr.add(uid); part[targetDate]=Array.from(arr); storage.setPart(part);
+  markWishItemsConfirmed(false);
+  return true;
+}
+function tryAddChoice(targetDate, slot, isPri){
+  const name=requireName(); if(!name) return;
+  if(!confirmPriorityIfNeeded(isPri)) return;
+  const cur=getMyChoicesForDate(targetDate);
+  if(cur.includes(slot.id)) return;
+  if(cur.length>=3){ alert("第1〜第3までです。"); return; }
+  const next = cur.concat([slot.id]);
+  const ok=setMyChoicesForDate(targetDate, next);
+  if(ok){
+    if (next.length === 3){
+      alert('完了したら、最下部にある「抽選希望を確定する」を押して希望を送信してください。');
+    } else {
+      alert("希望枠に追加しました。");
+    }
+    buildSlots(); updateFinalizeUI();
+  }
+}
+function removeChoice(targetDate, slotId){
+  const cur=getMyChoicesForDate(targetDate);
+  const ok=setMyChoicesForDate(targetDate, cur.filter(x=> x!==slotId));
+  renderWishes(); updateFinalizeUI();
+}
+
+/* ========= 抽選（週内公平ロジック） ========= */
+function weekRangeISO(targetISO){
+  const d=new Date(`${targetISO}T00:00:00+09:00`);
+  const wd=d.getDay(); const diffToMon = (wd===0? -6 : 1-wd);
+  const start=new Date(d); start.setDate(d.getDate()+diffToMon);
+  const end=new Date(start); end.setDate(start.getDate()+6);
+  const toISO=(dt)=>`${dt.getFullYear()}-${z2(dt.getMonth()+1)}-${z2(dt.getDate())}`;
+  return {start:toISO(start), end:toISO(end)};
+}
+function winsThisWeek(userId, weekStartISO, weekEndISO){
+  const res=storage.getRes();
+  return Object.values(res).filter(r=> r.userId===userId && r.date>=weekStartISO && r.date<=weekEndISO && r.source==="lottery").length;
+}
+function runLotteryForDate(targetISO){
+  const lot=storage.getLot(); const entries=(lot[targetISO]||[]).map(x=>({...x}));
+  if(entries.length===0) return {assigned:0};
+  const res=storage.getRes();
+  const byUserWins={};
+  for(const r of Object.values(res)){ if(r.date===targetISO) byUserWins[r.userId]=(byUserWins[r.userId]||0)+1; }
+  const {start:weekStart,end:weekEnd}=weekRangeISO(targetISO);
+  const slotApplicants={};
+  for(const e of entries){
+    (e.choices||[]).slice(0,3).forEach((slotId,idx)=>{
+      (slotApplicants[slotId] ||= []).push({userId:e.userId,name:e.name,p:idx});
+    });
+  }
+  function weight(app){
+    const base = app.p===0?1.0 : app.p===1?0.6 : 0.3;
+    const wwins = winsThisWeek(app.userId, weekStart, weekEnd);
+    const fairness = Math.max(0.1, (wwins===0?0.5: wwins===1?0.2: wwins===2?0.0: -0.2));
+    return Math.max(0.05, base + fairness);
+  }
+  function pickWeighted(arr){ const tot=arr.reduce((a,b)=>a+weight(b),0); let r=Math.random()*tot; for(const x of arr){ r-=weight(x); if(r<=0) return x; } return arr[arr.length-1]; }
+  const allSlots = CONFIG.rooms.flatMap(room => generateSlotsForDateRoom(targetISO, room));
+  let assigned=0;
+  for(const s of allSlots){
+    if(res[s.id]) continue;
+    const apps=(slotApplicants[s.id]||[]).filter(a=> !byUserWins[a.userId]);
+    if(apps.length===0) continue;
+    const win=pickWeighted(apps);
+    res[s.id]={userId:win.userId,name:win.name,...s,source:"lottery"};
+    byUserWins[win.userId]=1;
+    assigned++;
+  }
+  delete lot[targetISO];
+  storage.setRes(res); storage.setLot(lot);
+  return {assigned};
+}
+
+/* ========= 8:00 自動抽選 & ポップアップ ========= */
+function autoLotteryTick(){
+  const n = nowJST();
+  const h = n.getHours(), m = n.getMinutes();
+  const today = toISODate(n);
+  const closeKey = "sr_lottery_closed_"+today;
+  const doneKey  = "sr_lottery_done_"+today;
+  if (h === 8 && !localStorage.getItem(closeKey)) localStorage.setItem(closeKey, "1");
+  if (h === 8 && m < 5 && !localStorage.getItem(doneKey)) {
+    runLotteryForDate(today);
+    localStorage.setItem(doneKey, "1");
+  }
+}
+function showLotteryPopupIfNeeded(){
+  const n=nowJST();
+  if (n.getHours() < 8) return;
+  const today = toISODate(n);
+  const flagKey = "sr_popup_done_" + today;
+  if (localStorage.getItem(flagKey)) return;
+  const uid = storage.getUID();
+  const part = storage.getPart();
+  const participants = new Set(part[today] || []);
+  if(!participants.has(uid)) return;
+  const wins = Object.values(storage.getRes()).filter(x => x.date === today && x.userId === uid && x.source === "lottery");
+  if (wins.length > 0) {
+    let msg = "【抽選結果】\n";
+    wins.forEach(w => msg += `・シャワー室${w.room} ${w.start}〜${w.end}\n`);
+    msg += "\n上記の時間帯で予約が確定しました。";
+    alert(msg);
+  } else {
+    alert("申し訳ございません。今回の抽選ではご希望の時間帯が確保できませんでした。\n現在は空いている枠を即時ご予約いただけますので、ご都合の良い時間をお選びください。");
+  }
+  localStorage.setItem(flagKey, "1");
+  renderConfirmed();
+}
+
+/* ========= 確定枠（即時時間は変更ボタン無し／取消のみ） ========= */
+function renderConfirmed(){
+  if (endOfDayBlocked()){ el.confirmedCard.style.display='none'; return; }
+  const uid=storage.getUID();
+  const tdate=targetDateForMode(currentMode());
+  const items=Object.values(storage.getRes()).filter(r=> r.userId===uid && r.date===tdate)
+                 .sort((a,b)=> (a.start).localeCompare(b.start));
+  const card=el.confirmedCard, list=el.confirmedList;
+  if(items.length===0){ card.style.display="none"; list.innerHTML=""; return; }
+  card.style.display="block"; list.innerHTML="";
+  const mode=currentMode();
+  for(const r of items){
+    const div=document.createElement('div'); div.className="item";
+    const leftHTML = `
+      <span class="badge" style="border-color:${r.source==='instant'?'#bbf7d0':'#bae6fd'};background:${r.source==='instant'?'#f0fdf4':'#f0f9ff'};color:${r.source==='instant'?'#166534':'#075985'}">${r.source==='instant'?'即時':'抽選'}</span>
+      <span class="timeinfo">${r.date} シャワー室${r.room} ${r.start}–${r.end}</span>
+    `;
+    const btnWrap = document.createElement('div');
+    btnWrap.style.marginLeft = "auto";
+    btnWrap.style.display = "flex";
+    btnWrap.style.gap = "8px";
+    // 即時モードでは「予約変更」ボタンを出さない（取消のみ）
+    btnWrap.innerHTML = `<button class="btn" data-act="cancel" data-id="${r.id}">予約取り消し</button>`;
+    div.innerHTML = leftHTML;
+    div.appendChild(btnWrap);
+    list.appendChild(div);
+  }
+  list.querySelectorAll('button[data-act="cancel"]').forEach(b=>{ b.onclick = ()=> cancelReservation(b.dataset.id); });
+}
+function cancelReservation(slotId){
+  const res = storage.getRes();
+  if (!res[slotId]) { alert("既に取り消されています。"); renderConfirmed(); return; }
+  if (!confirm("この予約を取り消しますか？")) return;
+  delete res[slotId];
+  storage.setRes(res);
+  renderConfirmed();
+  refreshHeader();
+  alert("予約を取り消しました。");
+}
+
+/* ========= 希望（即時時間は描画しない） ========= */
+function renderWishes(){
+  const mode=currentMode();
+  const tdate=targetDateForMode(mode);
+  if (mode === "INSTANT_TODAY"){ el.wishList.innerHTML=''; return; }
+  const choices=getMyChoicesForDate(tdate);
+  const labels=["第１","第２","第３"];
+  el.wishList.innerHTML="";
+  if(choices.length===0){
+    el.wishList.innerHTML='<div class="note">現在、希望は登録されていません（抽選受付時間に最大3つまで追加できます）。</div>';
+  } else {
+    for(let i=0;i<3;i++){
+      const id=choices[i];
+      const row=document.createElement('div'); row.className="item"; row.dataset.index=i;
+      if(!id){
+        row.innerHTML = `<span class="handle">☰</span><span class="rank">${labels[i]}</span><div class="label"><div class="date">未選択</div></div><div class="fill"></div><button class="btn ghost rm" disabled>外す</button>`;
+      }else{
+        const [dateISO, room, start]=id.split("_");
+        const end=addMinutes(new Date(`${dateISO}T${start}:00+09:00`), CONFIG.slotMinutes);
+        const endtxt=`${z2(end.getHours())}:${z2(end.getMinutes())}`;
+        row.dataset.slotId = id;
+        row.innerHTML = `<span class="handle">☰</span><span class="rank">${labels[i]}</span><div class="label"><div class="date">${dateISO}</div><div class="timeinfo">シャワー室${room}　${start}–${endtxt}</div></div><div class="fill"></div><button class="btn ghost rm" data-id="${id}">外す</button>`;
+      }
+      el.wishList.appendChild(row);
+    }
+  }
+  const uid=storage.getUID(); const conf=isConfirmed(uid,tdate);
+  markWishItemsConfirmed(conf);
+  el.wishList.querySelectorAll('.rm[data-id]').forEach(btn=>{ btn.onclick=()=>{ removeChoice(targetDateForMode(currentMode()), btn.dataset.id); }; });
+  bindWishReorder();
+}
+function markWishItemsConfirmed(flag){
+  el.wishList.querySelectorAll('.item').forEach(n=>{ if(flag) n.classList.add('confirmed'); else n.classList.remove('confirmed'); });
+}
+
+/* ========= finalize ========= */
+function bindFinalize(){
+  el.finalizeBtn.onclick = () => {
+    const uid = storage.getUID();
+    const tdate = targetDateForMode(currentMode());
+    const choices = getMyChoicesForDate(tdate);
+    if (choices.length < 3) { alert("第１〜第３まで選んでから確定してください。"); return; }
+    setConfirmed(uid, tdate, true);
+    updateFinalizeUI();
+    markWishItemsConfirmed(true);
+    alert("確定されました。変更する場合は再度送信してください。結果は8時に本画面で発表されます。");
+  };
+}
+function updateFinalizeUI(){
+  const uid = storage.getUID();
+  const tdate = targetDateForMode(currentMode());
+  const choices = getMyChoicesForDate(tdate);
+  const confirmed = isConfirmed(uid, tdate);
+  const canConfirm = choices.length === 3;
+  el.finalizeBtn.disabled = !canConfirm || confirmed;
+  el.finalizeBtn.style.opacity = (el.finalizeBtn.disabled ? "0.6" : "1");
+  if (!canConfirm) el.finalizeHint.textContent = "第１〜第３まで選ぶと確定できます。";
+  else if (confirmed) el.finalizeHint.textContent = "確定済みです。変更する場合は再度送信してください。";
+  else el.finalizeHint.textContent = "送信して確定してください。";
+}
+
+/* ========= 並べ替え（長押し） ========= */
+function bindWishReorder(){
+  const list = el.wishList;
+  const LONG_MS = 300;
+  let pressTimer=null, draggingEl=null, placeholder=null, startY=0;
+  const rows = Array.from(list.querySelectorAll('.item')).filter(r=> r.dataset.slotId);
+  rows.forEach(row=>{
+    row.addEventListener('pointerdown', (e)=>{
+      if(e.button!==0) return;
+      if (e.target.closest('.rm')) return;
+      startY = e.clientY;
+      pressTimer = setTimeout(()=> startDrag(row, e.clientY), LONG_MS);
+      row.setPointerCapture(e.pointerId);
+    });
+    row.addEventListener('pointermove', (e)=>{
+      if(!pressTimer && !draggingEl) return;
+      if(pressTimer && Math.abs(e.clientY - startY) > 6){ clearTimeout(pressTimer); pressTimer=null; }
+      if(draggingEl){
+        e.preventDefault();
+        draggingEl.style.transform = `translateY(${e.clientY - startY}px)`;
+        movePlaceholder(e.clientY);
+      }
+    });
+    row.addEventListener('pointerup', ()=>{ clearTimeout(pressTimer); pressTimer=null; if(draggingEl){ endDrag(); } });
+    row.addEventListener('pointercancel', ()=>{ clearTimeout(pressTimer); pressTimer=null; if(draggingEl){ endDrag(); } });
+  });
+  function startDrag(row, y){
+    draggingEl = row; row.classList.add('dragging');
+    placeholder = document.createElement('div'); placeholder.className = 'placeholder';
+    placeholder.style.height = `${row.getBoundingClientRect().height}px`; row.after(placeholder); startY = y;
+  }
+  function movePlaceholder(clientY){
+    const siblings = Array.from(list.querySelectorAll('.item,.placeholder')).filter(n=> n!==draggingEl);
+    let insertBefore = null;
+    for(const el of siblings){
+      const rect = el.getBoundingClientRect();
+      if(clientY < rect.top + rect.height/2){ insertBefore = el; break; }
+    }
+    if(insertBefore){ list.insertBefore(placeholder, insertBefore); } else { list.appendChild(placeholder); }
+  }
+  function endDrag(){
+    draggingEl.classList.remove('dragging'); draggingEl.style.transform = '';
+    placeholder.replaceWith(draggingEl); placeholder=null;
+    const tdate=targetDateForMode(currentMode());
+    const ids = Array.from(list.querySelectorAll('.item')).map(r=> r.dataset.slotId || null).filter(x=> x!==undefined);
+    const newChoices = ids.filter(Boolean);
+    setMyChoicesForDate(tdate, newChoices);
+    draggingEl=null; renderWishes(); updateFinalizeUI();
+  }
+}
+
+/* ========= 起動 ========= */
+init();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(console.error);
+}
+
+</script>
 </body>
 </html>
