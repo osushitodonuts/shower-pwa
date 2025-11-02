@@ -2,23 +2,26 @@
   "name": "シャワー室予約",
   "short_name": "シャワー予約",
   "lang": "ja",
-  "start_url": "/shower-pwa/user.html",
-  "scope": "/shower-pwa/",
+  "dir": "auto",
+
+  "start_url": "./user.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
+
   "theme_color": "#1e40af",
   "background_color": "#ffffff",
   "description": "学内シャワー室の空き状況を確認・予約できるPWAアプリです。",
 
   "icons": [
     {
-      "src": "/shower-pwa/docs/newicons/icon-192.png",
+      "src": "newicons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/shower-pwa/docs/newicons/icon-512.png",
+      "src": "newicons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -29,14 +32,16 @@
     {
       "name": "管理者画面を開く",
       "short_name": "管理",
-      "url": "/shower-pwa/admin.html",
+      "url": "./admin.html",
       "icons": [
         {
-          "src": "/shower-pwa/docs/newicons/icon-192.png",
+          "src": "newicons/icon-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
       ]
     }
-  ]
+  ],
+
+  "prefer_related_applications": false
 }
