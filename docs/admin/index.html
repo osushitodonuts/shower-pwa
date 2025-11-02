@@ -1,69 +1,73 @@
-<script>
-/* ====== 管理ゲート（URL秘匿 + 端末制限 + ログイン）====== */
-/* 共有トークン（URLに ?key=XXXX で配布。後から変更OK） */
-const SHARED_TOKEN = "kagoshimauniv_peds";
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- 修正版：1つ上の階層の manifest を参照 -->
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#1e40af">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>シャワー室 予約管理（管理者）</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #fff; color: #111; }
+    .center { text-align: center; padding: 40px; }
+  </style>
+</head>
+<body>
+  <div class="center">
+    <h1>管理者画面の初期設定中...</h1>
+    <p>しばらくお待ちください。</p>
+  </div>
 
-/* 既存の設定を読む（あなたの管理JSと整合） */
-const ADMIN_KEYS = { SETTINGS:'sr_admin_settings', SESSION:'sr_admin_session', DEVICE:'sr_admin_device_id' };
+  <script>
+  /******************** 管理者ゲート ********************/
+  const SHARED_TOKEN = "pan-2025-11";  // ←管理者用キー（好きな文字列に変えてOK）
 
-function loadSettings(){ try{ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SETTINGS)||'{}'); }catch{ return {}; } }
-function saveSettings(s){ localStorage.setItem(ADMIN_KEYS.SETTINGS, JSON.stringify(s)); }
-function session(){ try{ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SESSION)||'{}'); }catch{ return {}; } }
-function getDeviceId(){
-  let v = localStorage.getItem(ADMIN_KEYS.DEVICE);
-  if(!v){ v = `dev-${(crypto&&crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2))}`;
-    localStorage.setItem(ADMIN_KEYS.DEVICE, v);
+  const params = new URLSearchParams(location.search);
+  const key = params.get("key");
+  const DEV_KEY = "sr_admin_device_id";
+  const SETTINGS_KEY = "sr_admin_settings";
+
+  function getDeviceId() {
+    let id = localStorage.getItem(DEV_KEY);
+    if (!id) {
+      id = "dev-" + crypto.randomUUID();
+      localStorage.setItem(DEV_KEY, id);
+    }
+    return id;
   }
-  return v;
-}
 
-/* 初期化：トグルのデフォルト（存在しない場合） */
-(function ensureDefaults(){
-  const s = loadSettings();
-  if (typeof s.loginEnabled === 'undefined') s.loginEnabled = false;
-  if (typeof s.deviceLockEnabled === 'undefined') s.deviceLockEnabled = false;
-  if (!Array.isArray(s.users)) s.users = [];           // {id,name,pin}
-  if (!Array.isArray(s.allowedDevices)) s.allowedDevices = [];
-  saveSettings(s);
-})();
-
-/* 1) 共有トークン経由の初回登録（?key=XXXX） */
-(function tokenIntake(){
-  const q = new URLSearchParams(location.search);
-  const key = q.get('key');
-  if (!key) return;
-  if (key === SHARED_TOKEN) {
-    // この端末を許可リストへ登録
-    const s = loadSettings();
+  function registerDevice() {
+    const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    s.allowedDevices ||= [];
     const id = getDeviceId();
-    if (!s.allowedDevices.includes(id)) s.allowedDevices.push(id);
-    // 最低限、端末ロックONにしておく（任意）
-    s.deviceLockEnabled = true;
-    saveSettings(s);
-    sessionStorage.setItem('admin_token_ok', '1'); // セッション内OKフラグ
-    // URLの?keyを消す
-    const url = new URL(location.href);
-    url.searchParams.delete('key');
-    history.replaceState(null,'',url.toString());
-    alert('この端末を管理者端末として登録しました。');
+    if (!s.allowedDevices.includes(id)) {
+      s.allowedDevices.push(id);
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+      alert("この端末を管理者端末として登録しました。");
+    } else {
+      alert("この端末はすでに登録済みです。");
+    }
   }
-})();
 
-/* 2) ゲート判定：端末 or ログインどちらか満たせば入室可（両方ONなら両方） */
-(function gate(){
-  const s = loadSettings();
-  const devId = getDeviceId();
-  const ses   = session();
-
-  const deviceOK = !s.deviceLockEnabled || (s.allowedDevices||[]).includes(devId);
-  const loginOK  = !s.loginEnabled      || !!ses.userId;
-
-  if (!(deviceOK && loginOK)) {
-    // 共有URLトークンで来て、まだセッションOKなら許可（1タブ限定）
-    if (sessionStorage.getItem('admin_token_ok') === '1') return;
-    // それ以外は一般画面へ
-    location.replace('../user.html');
+  if (key === SHARED_TOKEN) {
+    registerDevice();
+    location.href = location.pathname.replace(location.search, ""); // ?keyを削除して再読み込み
+  } else {
+    const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    const allowed = settings.allowedDevices || [];
+    const id = getDeviceId();
+    if (!allowed.includes(id)) {
+      document.body.innerHTML = "<div class='center'><h2>アクセス権がありません</h2><p>管理者専用URLからアクセスしてください。</p></div>";
+      throw new Error("Unauthorized device");
+    }
   }
-})();
-</script>
+  </script>
 
+  <!-- 修正版：sw.js の参照も 1階層上 -->
+  <script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("../sw.js").catch(console.error);
+  }
+  </script>
+</body>
+</html>
