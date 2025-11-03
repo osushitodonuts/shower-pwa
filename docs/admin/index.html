@@ -1,104 +1,131 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <!-- ★ GitHub Pagesで確実に解決するよう、ルート相対パスを使用 -->
-  <link rel="manifest" href="/shower-pwa/manifest.webmanifest">
+  <!-- admin/ 配下なので manifest / icons / sw は 1階層上を参照 -->
+  <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#1e40af">
-  <link rel="apple-touch-icon" href="/shower-pwa/newicons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/shower-pwa/newicons/icon-180.png">
+  <link rel="apple-touch-icon" href="../newicons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../newicons/icon-180.png">
 
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
   <title>シャワー室 予約管理（管理者）</title>
   <style>
-  :root{
-    --bg:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
-    --primary:#1d4ed8; --ok:#16a34a; --danger:#dc2626;
-    --panel:#f0f9ff; --radius:14px; --space:16px;
-    --shadow:0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
-    --panel-br:#bae6fd; --priority:#f9a8d4;
-    --g1:#e0f2fe; --g2:#fde7f3; --row-priority:#fef9c3;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-  .container{max-width:1100px;margin:0 auto;padding:18px}
-  header{border-bottom:1px solid var(--line);background:#fff}
-  header .inner{max-width:1100px;margin:0 auto;padding:12px var(--space);display:flex;gap:12px;align-items:center;justify-content:space-between}
-  .h1{font-weight:900;font-size:clamp(20px,3vw,26px);display:flex;align-items:center;gap:10px}
-  small.muted{color:var(--muted)}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px dashed var(--line);border-radius:999px;background:#f8fafc}
-  input,select,button{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:42px}
-  button{background:#fff;cursor:pointer}
-  button.primary{background:#2563eb;border-color:#1d4ed8;color:#fff}
-  button.danger{background:#ef4444;border-color:#dc2626;color:#fff}
-  button.ghost{background:#fff;border-color:#d1d5db}
-  button.icon{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px}
-  .note{font-size:12px;color:var(--muted)}
+    :root{
+      --bg:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+      --primary:#1d4ed8; --ok:#16a34a; --danger:#dc2626;
+      --panel:#f0f9ff; --radius:14px; --space:16px;
+      --shadow:0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
+      --panel-br:#bae6fd; --priority:#f9a8d4;
+      --g1:#e0f2fe; --g2:#fde7f3; --row-priority:#fef9c3;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .container{max-width:1100px;margin:0 auto;padding:18px}
+    header{border-bottom:1px solid var(--line);background:#fff}
+    header .inner{
+      max-width:1100px;margin:0 auto;padding:12px var(--space);
+      display:flex;gap:12px;align-items:center;justify-content:space-between; min-height:56px;
+    }
+    .h1{
+      font-weight:900;
+      font-size:clamp(16px,4.2vw,26px); /* 小画面で縮小して改行回避 */
+      display:flex;align-items:center;gap:10px;
+      line-height:1.15;
+      white-space:nowrap; /* 改行させない */
+    }
+    small.muted{color:var(--muted); font-weight:600}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px dashed var(--line);border-radius:999px;background:#f8fafc; font-size:13px}
+    input,select,button{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:42px;font:inherit}
+    button{background:#fff;cursor:pointer}
+    button.primary{background:#2563eb;border-color:#1d4ed8;color:#fff}
+    button.danger{background:#ef4444;border-color:#dc2626;color:#fff}
+    button.ghost{background:#fff;border-color:#d1d5db}
+    button.icon{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px}
+    .note{font-size:12px;color:var(--muted)}
 
-  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin:16px 0}
-  .card h3{margin:0;padding:12px 14px;border-bottom:1px solid var(--line)}
-  .section{padding:12px;display:grid;gap:10px}
+    .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin:16px 0}
+    .card h3{margin:0;padding:12px 14px;border-bottom:1px solid var(--line);font-size:clamp(15px,3.5vw,18px)}
+    .section{padding:12px;display:grid;gap:10px}
 
-  .grid-rooms{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .room-col{border:1px solid var(--panel-br);border-radius:12px;background:var(--panel);padding:10px}
-  .room-col.room2{background:var(--g2); border-color:#fbcfe8;}
-  .room-title{font-weight:800;margin:0 0 8px 0}
-  .list{display:flex;flex-direction:column;gap:10px}
-  .slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:10px;display:flex;gap:12px;align-items:center}
-  .slot.priority{border:2px solid var(--priority)}
-  .slot .time{font-weight:700;min-width:220px}
-  .slot .who{flex:1}
-  .slot .actions{display:flex;gap:6px;flex-wrap:wrap}
-  .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid #cbd5e1;border-radius:999px;padding:4px 8px;font-size:12px}
-  .badge.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
-  .badge.info{background:#f0f9ff;border-color:#bae6fd;color:#075985}
+    /* 2列固定（常に 1fr 1fr）。スマホでは余白を詰めて視認性を確保 */
+    .grid-rooms{
+      display:grid;grid-template-columns:1fr 1fr;gap:12px;
+      align-items:start;
+    }
+    .room-col{border:1px solid var(--panel-br);border-radius:12px;background:var(--panel);padding:10px}
+    .room-col.room2{background:var(--g2); border-color:#fbcfe8;}
+    .room-title{font-weight:800;margin:0 0 8px 0; font-size:clamp(14px,3.6vw,16px)}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:10px;display:flex;gap:12px;align-items:center}
+    .slot.priority{border:2px solid var(--priority)}
+    .slot .time{font-weight:700;min-width:200px; font-size:clamp(13px,3.6vw,15px)}
+    .slot .who{flex:1; min-width:0}
+    .slot .actions{display:flex;gap:6px;flex-wrap:wrap}
+    .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid #cbd5e1;border-radius:999px;padding:4px 8px;font-size:12px}
+    .badge.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
+    .badge.info{background:#f0f9ff;border-color:#bae6fd;color:#075985}
 
-  .table-wrap{overflow:auto}
-  .table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
-  .table th,.table td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:middle}
-  .table thead th{position:sticky;top:0;background:#fff;z-index:1}
-  th.center, td.center{text-align:center}
-  th.left, td.left{text-align:left}
-  .col-time{width:140px}
-  .timecode{font-variant-numeric:tabular-nums}
-  td.g1, th.g1{background:var(--g1)}
-  td.g2, th.g2{background:var(--g2)}
-  .vcut-thick{border-left:3px solid #9ca3af}
-  .vcut-thin{border-left:1px solid #d1d5db}
-  .table tbody tr:nth-child(odd) td{background:rgba(15,23,42,0.015)}
-  .table tbody tr:hover td{background:rgba(59,130,246,0.06)}
-  tr.priorityRow td{background:var(--row-priority) !important}
+    .table-wrap{overflow:auto}
+    .table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+    .table th,.table td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:middle}
+    .table thead th{position:sticky;top:0;background:#fff;z-index:1}
+    th.center, td.center{text-align:center}
+    th.left, td.left{text-align:left}
+    .col-time{width:140px}
+    .timecode{font-variant-numeric:tabular-nums}
+    td.g1, th.g1{background:var(--g1)}
+    td.g2, th.g2{background:var(--g2)}
+    .vcut-thick{border-left:3px solid #9ca3af}
+    .vcut-thin{border-left:1px solid #d1d5db}
+    .table tbody tr:nth-child(odd) td{background:rgba(15,23,42,0.015)}
+    .table tbody tr:hover td{background:rgba(59,130,246,0.06)}
+    tr.priorityRow td{background:var(--row-priority) !important}
 
-  .dialog{
-    position:fixed; inset:0; background:rgba(2,6,23,.5);
-    display:none; align-items:center; justify-content:center; padding:16px;
-    z-index:9999;
-  }
-  .dialog .panel{
-    background:#fff; border-radius:14px; max-width:560px; width:100%;
-    box-shadow:0 10px 40px rgba(0,0,0,.25); overflow:hidden;
-    position:relative; z-index:10000;
-  }
-  .settings .panel{max-width:720px}
-  .userlist{display:flex;flex-direction:column;gap:8px}
-  .useritem{display:flex;gap:8px;align-items:center}
-  .useritem .name{font-weight:600}
-  .right{display:flex;gap:8px;align-items:center}
+    .dialog{
+      position:fixed; inset:0; background:rgba(2,6,23,.5);
+      display:none; align-items:center; justify-content:center; padding:16px;
+      z-index:9999;
+    }
+    .dialog .panel{
+      background:#fff; border-radius:14px; max-width:560px; width:100%;
+      box-shadow:0 10px 40px rgba(0,0,0,.25); overflow:hidden;
+      position:relative; z-index:10000;
+    }
+    .settings .panel{max-width:720px}
+    .userlist{display:flex;flex-direction:column;gap:8px}
+    .useritem{display:flex;gap:8px;align-items:center}
+    .useritem .name{font-weight:600}
+    .right{display:flex;gap:8px;align-items:center}
 
-  .toggle{position:relative;width:48px;height:28px;flex:0 0 48px}
-  .toggle input{position:absolute;opacity:0;width:0;height:0}
-  .toggle .track{position:absolute;inset:0;border-radius:999px;background:#e5e7eb;transition:background .2s}
-  .toggle .thumb{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s}
-  .toggle input:checked + .track{background:#60a5fa}
-  .toggle input:checked + .track .thumb{left:22px}
+    .toggle{position:relative;width:48px;height:28px;flex:0 0 48px}
+    .toggle input{position:absolute;opacity:0;width:0;height:0}
+    .toggle .track{position:absolute;inset:0;border-radius:999px;background:#e5e7eb;transition:background .2s}
+    .toggle .thumb{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s}
+    .toggle input:checked + .track{background:#60a5fa}
+    .toggle input:checked + .track .thumb{left:22px}
 
-  .switchRow{display:flex;align-items:center;gap:10px}
-  .switchRow .label{min-width:16ch}
+    .switchRow{display:flex;align-items:center;gap:10px}
+    .switchRow .label{min-width:16ch}
 
-  #gate,#loading{max-width:960px;margin:24px auto;padding:24px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow)}
-  #gate h2{margin-top:0}
-  @media (max-width:900px){ .grid-rooms{grid-template-columns:1fr} }
+    #gate,#loading{max-width:960px;margin:24px auto;padding:24px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow)}
+    #gate h2{margin-top:0}
+
+    /* ===== モバイル微調整 ===== */
+    @media (max-width: 560px){
+      .container{padding:10px}
+      header .inner{padding:8px 10px; gap:8px}
+      .row{gap:6px}
+      .pill{padding:5px 8px; font-size:12px}
+      .slot{gap:8px; padding:8px}
+      .slot .time{min-width:170px}
+      .room-col{padding:8px}
+      .grid-rooms{gap:8px} /* 2列のまま余白だけ詰める */
+      .right{gap:6px}
+      .icon{width:38px;height:38px}
+      input,select,button{min-height:38px;padding:8px 10px}
+    }
   </style>
 </head>
 <body>
@@ -107,12 +134,12 @@
 <div id="gate" style="display:none">
   <h2>アクセス権がありません</h2>
   <p>管理者専用URLからアクセスしてください。</p>
-  <p class="note">初回登録リンク例：<br>
-    <code>https://osushitodonuts.github.io/shower-pwa/admin/?key=kagoshimauniv_peds</code>
+  <p class="note">初回登録用リンク例：<br>
+    <code>https://&lt;あなた&gt;.github.io/shower-pwa/admin/?key=kagoshimauniv_peds</code>
   </p>
 </div>
 
-<!-- 初期登録中 -->
+<!-- 初期登録中の表示 -->
 <div id="loading" style="display:none">
   <b>管理者画面の初期設定中...</b><br>しばらくお待ちください。
 </div>
@@ -120,7 +147,7 @@
 <!-- 本体UI -->
 <header id="hdr" style="display:none">
   <div class="inner">
-    <div>
+    <div style="min-width:0">
       <div class="h1">シャワー室 予約管理 <small class="muted">（管理者）</small></div>
       <div class="row" style="margin-top:6px">
         <span class="pill">日時：<b id="nowLabel">—</b></span>
@@ -130,7 +157,7 @@
     <div class="right">
       <input type="date" id="datePicker" />
       <button class="ghost" id="refreshBtn">再読込</button>
-      <button class="icon" id="settingsBtn" title="設定">⚙️</button>
+      <button class="icon" id="settingsBtn" title="設定" aria-label="設定">⚙️</button>
     </div>
   </div>
 </header>
@@ -156,7 +183,7 @@
   <div class="card" id="lotteryCard">
     <h3 id="lotteryTitle">明日分 抽選希望の集計</h3>
     <div class="section table-wrap">
-      <table class="table" id="lotteryTable">
+      <table class="table" id="lotteryTable" aria-label="抽選集計テーブル">
         <thead>
           <tr>
             <th class="left col-time">時間</th>
@@ -181,23 +208,31 @@
 </div>
 
 <!-- 編集モーダル -->
-<div class="dialog" id="editDialog">
+<div class="dialog" id="editDialog" role="dialog" aria-modal="true" aria-label="枠の編集">
   <div class="panel">
-    <div class="head"><div>枠の編集</div><button class="ghost" id="closeEdit">閉じる</button></div>
-    <div class="body">
+    <div class="head" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)">
+      <div style="font-weight:700">枠の編集</div>
+      <button class="ghost" id="closeEdit">閉じる</button>
+    </div>
+    <div class="body" style="padding:12px;display:grid;gap:10px">
       <div class="row"><span class="pill" id="editCurrentLabel">現在：—</span></div>
       <div class="row"><input id="editName" placeholder="氏名" style="flex:1" /></div>
       <div class="note">※ 枠の移動や時間変更はできません。空きにする場合は各行の「クリア」を使ってください。</div>
     </div>
-    <div class="foot"><button class="primary" id="editSave">保存</button></div>
+    <div class="foot" style="padding:12px;border-top:1px solid var(--line)">
+      <button class="primary" id="editSave">保存</button>
+    </div>
   </div>
 </div>
 
 <!-- 設定モーダル -->
-<div class="dialog settings" id="settingsDialog">
+<div class="dialog settings" id="settingsDialog" role="dialog" aria-modal="true" aria-label="設定">
   <div class="panel">
-    <div class="head"><div>設定</div><button class="ghost" id="closeSettings">閉じる</button></div>
-    <div class="body">
+    <div class="head" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)">
+      <div style="font-weight:700">設定</div>
+      <button class="ghost" id="closeSettings">閉じる</button>
+    </div>
+    <div class="body" style="padding:12px;display:grid;gap:12px">
       <div class="row switchRow">
         <span class="label">ログイン機能</span>
         <label class="toggle"><input type="checkbox" id="loginToggle"><span class="track"><span class="thumb"></span></span></label>
@@ -208,7 +243,7 @@
         <button class="ghost" id="registerDeviceBtn">この端末を登録</button>
       </div>
       <hr/>
-      <h4>ユーザーの登録</h4>
+      <h4 style="margin:0">ユーザーの登録</h4>
       <div class="row">
         <input id="newUserName" placeholder="表示名" />
         <input id="newUserPin" placeholder="PIN（4桁）" maxlength="4" />
@@ -227,52 +262,48 @@
 </div>
 
 <!-- ログインモーダル -->
-<div class="dialog" id="loginDialog">
+<div class="dialog" id="loginDialog" role="dialog" aria-modal="true" aria-label="ログイン">
   <div class="panel">
-    <div class="head"><div>ログイン</div><button class="ghost" id="closeLogin">閉じる</button></div>
-    <div class="body">
+    <div class="head" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)">
+      <div style="font-weight:700">ログイン</div>
+      <button class="ghost" id="closeLogin">閉じる</button>
+    </div>
+    <div class="body" style="padding:12px">
       <div class="row">
-        <select id="loginUser"></select>
-        <input id="loginPin" placeholder="PIN（4桁）" maxlength="4" />
+        <select id="loginUser" aria-label="ユーザー選択"></select>
+        <input id="loginPin" placeholder="PIN（4桁）" maxlength="4" inputmode="numeric" aria-label="PIN" />
       </div>
     </div>
-    <div class="foot"><button class="primary" id="doLogin">ログイン</button></div>
+    <div class="foot" style="padding:12px;border-top:1px solid var(--line)">
+      <button class="primary" id="doLogin">ログイン</button>
+    </div>
   </div>
 </div>
 
 <script>
-/** ================= 管理者アクセス鍵（初回 only）================= */
+/** ====== 管理者アクセス鍵（初回 only）====== */
 const ADMIN_ACCESS_KEY = "kagoshimauniv_peds";
 
-/** ================= 相対パス注意：/shower-pwa/sw.js を登録 ================= */
+/** ====== 相対パス注意：admin/ から ../sw.js を登録 ====== */
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/shower-pwa/sw.js').catch(console.error);
+  navigator.serviceWorker.register('../sw.js').catch(console.error);
 }
 
-/** ================== ストレージキー ================== */
-const ADMIN_KEYS = {
-  SETTINGS:'sr_admin_settings',
-  SESSION:'sr_admin_session',
-  DEVICE:'sr_admin_device_id'
-};
-
-/** ================== Gateユーティリティ ================== */
+/** ====== ゲート制御（?key=... で端末登録 → 以後はURLだけで入れる） ====== */
+const ADMIN_KEYS = { SETTINGS:'sr_admin_settings', SESSION:'sr_admin_session', DEVICE:'sr_admin_device_id' };
 function getDeviceId(){
   let v = localStorage.getItem(ADMIN_KEYS.DEVICE);
   if(!v){ v = `dev-${crypto.randomUUID()}`; localStorage.setItem(ADMIN_KEYS.DEVICE, v); }
   return v;
 }
-function loadSettings(){
-  try { return JSON.parse(localStorage.getItem(ADMIN_KEYS.SETTINGS)||'{}'); }
-  catch(e){ return {}; }
-}
+function loadSettings(){ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SETTINGS)||'{}'); }
 function saveSettings(s){ localStorage.setItem(ADMIN_KEYS.SETTINGS, JSON.stringify(s)); }
 function ensureDefaults(){
-  const s = loadSettings() || {};
-  if (typeof s.loginEnabled === 'undefined') s.loginEnabled = false;
-  if (typeof s.deviceLockEnabled === 'undefined') s.deviceLockEnabled = true; // 既定ON
-  if (!Array.isArray(s.users)) s.users = [];
-  if (!Array.isArray(s.allowedDevices)) s.allowedDevices = [];
+  const s = loadSettings();
+  s.loginEnabled ??= false;
+  s.deviceLockEnabled ??= true;  // 既定で端末制限ON
+  s.users ??= [];
+  s.allowedDevices ??= [];
   saveSettings(s);
 }
 function allowThisDevice(){
@@ -292,27 +323,15 @@ function isAllowed(){
 function stripKeyFromURL(){
   const url = new URL(location.href);
   url.searchParams.delete('key');
-  // 万一 #key= で来た場合も消す
-  if (url.hash.includes('key=')) {
-    const h = new URLSearchParams(url.hash.replace(/^#/, ''));
-    h.delete('key');
-    const newHash = h.toString();
-    url.hash = newHash ? '#' + newHash : '';
-  }
   history.replaceState(null, '', url.toString());
 }
 
-/** ================== 初回ゲート処理 ================== */
 (async function gate(){
   ensureDefaults();
+  const params = new URLSearchParams(location.search);
+  const key = params.get('key');
 
-  // key を query または hash から取得（空白・全角なども除去）
-  const search = new URLSearchParams(location.search);
-  const hash = new URLSearchParams((location.hash||'').replace(/^#/, ''));
-  const keyRaw = search.get('key') ?? hash.get('key') ?? '';
-  const key = (keyRaw || '').trim();
-  console.log('[admin] key:', key || '(none)');
-
+  // 初回登録：?key=... が一致したら端末登録
   if(key){
     document.getElementById('loading').style.display = 'block';
     if(key === ADMIN_ACCESS_KEY){
@@ -321,7 +340,7 @@ function stripKeyFromURL(){
         stripKeyFromURL();
         document.getElementById('loading').style.display = 'none';
         boot();
-      }, 250);
+      }, 300);
       return;
     }else{
       document.getElementById('loading').style.display = 'none';
@@ -338,19 +357,11 @@ function stripKeyFromURL(){
   }
 })();
 
-/** ================== ここから管理UI本体 ================== */
+/** ====== ここから管理UI本体 ====== */
 function session(){ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SESSION)||'{}'); }
-function setSession(obj){
-  if(obj) localStorage.setItem(ADMIN_KEYS.SESSION, JSON.stringify(obj));
-  else localStorage.removeItem(ADMIN_KEYS.SESSION);
-  renderSessionUI();
-}
+function setSession(obj){ if(obj) localStorage.setItem(ADMIN_KEYS.SESSION, JSON.stringify(obj)); else localStorage.removeItem(ADMIN_KEYS.SESSION); renderSessionUI(); }
 
-const CONFIG = {
-  rooms:["1","2"],
-  slotStart:"09:00",
-  slotEnd:"21:00",
-  slotMinutes:20,
+const CONFIG = { rooms:["1","2"], slotStart:"09:00", slotEnd:"21:00", slotMinutes:20,
   priority: { "1": { start: "14:00", end: "16:00" }, "2": { start: "13:00", end: "16:00" } }
 };
 const KEY = { NAME:"sr_name", UID:"sr_uid", RES:"sr_reservations", LOT:"sr_lottery", PART:"sr_lot_participants" };
@@ -464,7 +475,6 @@ function canOperate(){
   return true;
 }
 
-/** ===== 設定モーダル制御 ===== */
 const settingsDialog = {
   root: ()=>document.getElementById('settingsDialog'),
   loginToggle: ()=>document.getElementById('loginToggle'),
@@ -523,7 +533,6 @@ function renderSessionUI(){
     opt.value=u.id; opt.textContent=u.name; sel.appendChild(opt);
   });
 }
-
 function boot(){
   // 本体表示に切替
   document.getElementById('gate').style.display='none';
