@@ -18,7 +18,8 @@
     --panel:#f0f9ff; --radius:14px; --space:16px;
     --shadow:0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
     --panel-br:#bae6fd; --priority:#f9a8d4;
-    --g1:#e0f2fe; --g2:#fde7f3; --row-priority:#fef9c3;
+    --g1:#e0f2fe; --g2:#fde7f3; --row-priority:#fef9c3; /* 表（抽選）用の薄黄 */
+    --priority-slot:#fffbe6; /* カードの優先枠：さらに薄い黄 */
     --fs-body: clamp(13px, 2.9vw, 15px);
     --fs-small: clamp(11px, 2.6vw, 13px);
     --fs-tiny: clamp(10px, 2.3vw, 12px);
@@ -54,7 +55,7 @@
 
   /* 2列（室1/室2） */
   .grid-rooms-wrap{position:relative; width:100%; overflow:hidden; /* スケールで高さを確保するため明示 */}
-  .grid-rooms{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px; transform-origin:top left;}
+  .grid-rooms{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px; transform-origin:top left; will-change:transform;}
   .room-col{border:1px solid var(--panel-br);border-radius:12px;background:var(--panel);padding:10px;min-width:0}
   .room-col.room2{background:var(--g2); border-color:#fbcfe8;}
   .room-title{font-weight:800;margin:0 0 8px 0;font-size:clamp(14px,3.4vw,16px)}
@@ -62,7 +63,7 @@
 
   /* スロットを3段構成に（よりコンパクト） */
   .slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:var(--pad-card);display:flex;flex-direction:column;gap:8px;font-size:var(--fs-small);min-width:0}
-  .slot.priority{border:2px solid var(--priority)}
+  .slot.priority{border:1px solid var(--line); background:var(--priority-slot);}
   .slot .row1{display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:nowrap;min-width:0}
   .slot .row1 .time{font-weight:700;font-size:var(--fs-body)}
   .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid #cbd5e1;border-radius:999px;padding:3px 8px;font-size:var(--fs-tiny);white-space:nowrap}
@@ -92,6 +93,18 @@
   /* スマホ最適化：横スクロールなしで室1/2を収める */
   @media (max-width:640px){
     .container{padding:12px}
+    header .inner{flex-direction:column;align-items:stretch;gap:10px}
+    .right{flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
+    .right>*{flex:0 0 auto}
+    .meta{grid-template-columns:1fr;gap:6px}
+    .grid-rooms{gap:8px}
+    .room-col{padding:8px}
+    .list{gap:6px}
+    .slot{padding:8px}
+    input,select,button{min-height:36px;padding:8px 10px}
+    /* カード枠を必ず画面幅に収める */
+    .card{border-width:1px;}
+  }
     header .inner{flex-direction:column;align-items:stretch;gap:10px}
     .right{flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
     .right>*{flex:0 0 auto}
@@ -168,7 +181,7 @@
   <div class="card" id="instantCard">
     <h3 id="instantTitle">当日の予約状況</h3>
     <div class="section">
-      <div id="roomsWrap" class="grid-rooms-wrap">
+      <div id="roomsWrap" class="grid-rooms-wrap" aria-label="当日の予約状況エリア" style="padding-right:1px">
         <div id="gridRooms" class="grid-rooms">
           <div class="room-col">
             <h4 class="room-title">シャワー室1</h4>
@@ -584,14 +597,27 @@ function fitRoomsToViewport(){
   const grid = el.gridRooms();
   if(!wrap || !grid) return;
 
-  // 一時的にスケールをリセットして自然幅を測定
-  grid.style.transform = 'none';
-  wrap.style.height = 'auto';
+  // レンダ後に計測（レイアウトが落ち着いてから）
+  requestAnimationFrame(()=>{
+    // 一旦リセット
+    grid.style.transform = 'none';
+    wrap.style.height = 'auto';
 
-  const avail = wrap.clientWidth;        // 利用可能幅
-  const actual = grid.scrollWidth;       // 実際に必要な幅
-  let scale = 1;
-  if(actual > avail){ scale = Math.max(0.75, avail / actual); } // 下限0.75まで縮小
+    const avail = Math.floor(wrap.clientWidth);   // 利用可能幅（整数化でサブピクセル誤差対策）
+    const actual = Math.ceil(grid.scrollWidth);   // 実必要幅（切れ対策で天井）
+
+    let scale = 1;
+    if(actual > avail){
+      scale = (avail - 1) / actual; // 右端の1pxクリップ対策
+      scale = Math.max(0.70, Math.min(1, scale));
+    }
+    grid.style.transform = `scale(${scale})`;
+
+    // スケール後の高さを確保（+2pxでボーダー分の逃げ）
+    const h = Math.ceil(grid.getBoundingClientRect().height * scale) + 2;
+    wrap.style.height = `${h}px`;
+  });
+} // 下限0.75まで縮小
 
   grid.style.transform = `scale(${scale})`;
   // 元の高さにスケールを掛けてラップ要素に確保
