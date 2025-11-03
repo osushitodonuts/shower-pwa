@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <!-- ★ ルート絶対パスに統一（GitHub Pages /{repo}/ 配下） -->
+  <!-- ルート絶対パスで統一 -->
   <link rel="manifest" href="/shower-pwa/manifest.webmanifest">
   <meta name="theme-color" content="#1e40af">
   <link rel="apple-touch-icon" href="/shower-pwa/newicons/icon-192.png">
@@ -25,10 +25,17 @@
   .container{max-width:1100px;margin:0 auto;padding:18px}
   header{border-bottom:1px solid var(--line);background:#fff}
   header .inner{max-width:1100px;margin:0 auto;padding:12px var(--space);display:flex;gap:12px;align-items:center;justify-content:space-between}
-  .h1{font-weight:900;font-size:clamp(18px,4.2vw,24px);display:flex;align-items:center;gap:10px;white-space:nowrap}
+
+  /* タイトルは必ず1行に収める（省略記号） */
+  .h1{font-weight:900;font-size:clamp(18px,4.2vw,24px);display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   small.muted{color:var(--muted)}
-  .row{display:flex;gap:8px;flex-wrap:nowrap;align-items:center;white-space:nowrap;overflow:hidden}
-  .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px dashed var(--line);border-radius:999px;background:#f8fafc}
+
+  /* ヘッダ内の3ブロック */
+  .left{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .meta{display:grid;grid-template-columns:1fr;gap:6px;align-items:center}
+  .right{display:flex;gap:8px;align-items:center}
+
+  .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px dashed var(--line);border-radius:999px;background:#f8fafc;white-space:nowrap;min-width:0}
   input,select,button{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:42px}
   button{background:#fff;cursor:pointer}
   button.primary{background:#2563eb;border-color:#1d4ed8;color:#fff}
@@ -41,20 +48,26 @@
   .card h3{margin:0;padding:12px 14px;border-bottom:1px solid var(--line)}
   .section{padding:12px;display:grid;gap:10px}
 
+  /* 2列（室1/室2） */
   .grid-rooms{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .room-col{border:1px solid var(--panel-br);border-radius:12px;background:var(--panel);padding:10px}
   .room-col.room2{background:var(--g2); border-color:#fbcfe8;}
   .room-title{font-weight:800;margin:0 0 8px 0}
-  .list{display:flex;flex-direction:column;gap:10px}
-  .slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:10px;display:flex;gap:12px;align-items:center;flex-wrap:nowrap}
+  .list{display:grid;grid-template-columns:1fr;gap:8px}
+
+  /* スロットを3段構成に */
+  .slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:10px;display:flex;flex-direction:column;gap:8px}
   .slot.priority{border:2px solid var(--priority)}
-  .slot .time{font-weight:700;min-width:220px;white-space:nowrap}
-  .slot .who{flex:1;min-width:0}
-  .slot .actions{display:flex;gap:6px;flex-wrap:nowrap}
+  .slot .row1{display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:nowrap}
+  .slot .row1 .time{font-weight:700}
   .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid #cbd5e1;border-radius:999px;padding:4px 8px;font-size:12px;white-space:nowrap}
   .badge.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
   .badge.info{background:#f0f9ff;border-color:#bae6fd;color:#075985}
+  .slot .row2{min-height:1em}
+  .slot .row3{display:flex;gap:6px;justify-content:flex-end;flex-wrap:nowrap}
+  .slot .row3 button{padding:8px 10px}
 
+  /* 抽選表 */
   .table-wrap{overflow:auto}
   .table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
   .table th,.table td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:middle}
@@ -71,31 +84,14 @@
   .table tbody tr:hover td{background:rgba(59,130,246,0.06)}
   tr.priorityRow td{background:var(--row-priority) !important}
 
-  .dialog{
-    position:fixed; inset:0; background:rgba(2,6,23,.5);
-    display:none; align-items:center; justify-content:center; padding:16px;
-    z-index:9999;
-  }
-  .dialog .panel{
-    background:#fff; border-radius:14px; max-width:560px; width:100%;
-    box-shadow:0 10px 40px rgba(0,0,0,.25); overflow:hidden;
-    position:relative; z-index:10000;
-  }
-  .settings .panel{max-width:720px}
-  .userlist{display:flex;flex-direction:column;gap:8px}
-  .useritem{display:flex;gap:8px;align-items:center}
-  .useritem .name{font-weight:600}
-  .right{display:flex;gap:8px;align-items:center}
-
-  /* スマホ最適化：ヘッダーは縦3段、でも各段は改行させない */
+  /* スマホ最適化：3ブロック縦、だが横スクロールは発生させない */
   @media (max-width:640px){
     header .inner{flex-direction:column;align-items:stretch}
-    .h1{justify-content:flex-start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .row{justify-content:flex-start}
-    .right{display:flex;gap:8px;flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
-    .right > *{flex:0 0 auto}
-    .grid-rooms{grid-template-columns:1fr 1fr} /* スマホでも2列維持 */
-    .slot .actions{flex-wrap:nowrap}
+    .right{flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
+    .right>*{flex:0 0 auto}
+    .meta{grid-template-columns:1fr;gap:6px}
+    /* 室1/2は2列のまま。中身を縦3段にしたので横スクロールなしで収まる */
+    .grid-rooms{grid-template-columns:1fr 1fr}
   }
 
   /* ゲート&ローディング */
@@ -131,9 +127,9 @@
 <!-- 本体UI -->
 <header id="hdr" style="display:none">
   <div class="inner">
-    <div>
+    <div class="left">
       <div class="h1">シャワー室 予約管理 <small class="muted">（管理者）</small></div>
-      <div class="row" style="margin-top:6px">
+      <div class="meta">
         <span class="pill">日時：<b id="nowLabel">—</b></span>
         <span class="pill">現在モード：<b id="modeLabel">—</b></span>
       </div>
@@ -147,6 +143,7 @@
 </header>
 
 <div class="container" id="main" style="display:none">
+  <!-- 上：即時編集 -->
   <div class="card" id="instantCard">
     <h3 id="instantTitle">当日の予約状況</h3>
     <div class="section">
@@ -164,6 +161,7 @@
     </div>
   </div>
 
+  <!-- 下：抽選集計 -->
   <div class="card" id="lotteryCard">
     <h3 id="lotteryTitle">明日分 抽選希望の集計</h3>
     <div class="section table-wrap">
@@ -259,7 +257,7 @@ const ADMIN_ACCESS_KEY = "kagoshimauniv_peds";
 const ADMIN_KEYS = { SETTINGS:'sr_admin_settings', SESSION:'sr_admin_session', DEVICE:'sr_admin_device_id' };
 const KEY = { NAME:"sr_name", UID:"sr_uid", RES:"sr_reservations", LOT:"sr_lottery", PART:"sr_lot_participants" };
 
-/** ========== SW登録（★絶対パス）========== */
+/** ========== SW登録（絶対パス）========== */
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/shower-pwa/sw.js').catch(console.error);
 }
@@ -300,18 +298,14 @@ function isAllowed(){
 }
 function setGateDebug(){
   const s = loadSettings();
-  const dbg = {
-    deviceId: getDeviceId(),
-    settings: s
-  };
-  document.getElementById('dbg').textContent = JSON.stringify(dbg,null,2);
+  const dbg = { deviceId: getDeviceId(), settings: s };
+  const el = document.getElementById('dbg');
+  if(el) el.textContent = JSON.stringify(dbg,null,2);
 }
 
-/** ========== 本体UIのロジック（既存機能） ========== */
-function session(){ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SESSION)||'{}'); }
-function setSession(obj){ if(obj) localStorage.setItem(ADMIN_KEYS.SESSION, JSON.stringify(obj)); else localStorage.removeItem(ADMIN_KEYS.SESSION); renderSessionUI(); }
-
+/** ========== 予約/抽選ロジック ========== */
 const CONFIG = { rooms:["1","2"], slotStart:"09:00", slotEnd:"21:00", slotMinutes:20,
+  /* ★優先枠を明示：室1=14-16、室2=13-16 */
   priority: { "1": { start: "14:00", end: "16:00" }, "2": { start: "13:00", end: "16:00" } }
 };
 
@@ -376,6 +370,7 @@ const storage={
   getLot(){return JSON.parse(localStorage.getItem(KEY.LOT)||"{}");}
 };
 
+/** ========== DOM参照 ========== */
 const el={
   modeLabel:()=>document.getElementById('modeLabel'),
   nowLabel:()=>document.getElementById('nowLabel'),
@@ -392,6 +387,94 @@ const el={
   main:()=>document.getElementById('main')
 };
 
+/** ========== 手動編集スロット描画（3段カード） ========== */
+function currentReservation(id){ const res=storage.getRes(); return res[id] || null; }
+function renderInstant(dateISO){
+  const target=dateISO || el.datePicker().value;
+  const res=storage.getRes();
+  const lists={ '1':el.listRoom1(), '2':el.listRoom2() };
+  lists['1'].innerHTML=''; lists['2'].innerHTML='';
+
+  for(const room of CONFIG.rooms){
+    const slots=generateSlotsForDateRoom(target, room);
+    for(const s of slots){
+      const r = res[s.id];
+      const row=document.createElement('div');
+      row.className='slot';
+      if(isPrioritySlot(s)) row.classList.add('priority');
+
+      const status = r? `<span class="badge ok">予約済</span>` : `<span class="badge info">空き</span>`;
+      const who = r? `${r.name} <small class="note">(${r.source})</small>` : '—';
+
+      row.innerHTML = `
+        <div class="row1"><div class="time">${s.start}–${s.end}</div>${status}</div>
+        <div class="row2">${who}</div>
+        <div class="row3"></div>
+      `;
+      const acts=row.querySelector('.row3');
+
+      const btnE=document.createElement('button');
+      btnE.className='ghost'; btnE.textContent = r? '編集' : '予約を入れる';
+      btnE.onclick=()=> openEdit(s);
+
+      const btnC=document.createElement('button');
+      btnC.className='danger'; btnC.textContent='クリア';
+      btnC.onclick=()=>{
+        if(!canOperate()){ alert('操作権限がありません'); return; }
+        const res=storage.getRes(); const existing = res[s.id];
+        if(existing && (existing.source==='instant' || existing.source==='lottery')){
+          if(!confirm('【確認】この枠は一般ユーザーによって確定/応募されたものです。クリアしますか？')) return;
+        }
+        delete res[s.id]; storage.setRes(res); refresh();
+      };
+
+      acts.append(btnE, btnC);
+      lists[room].appendChild(row);
+    }
+  }
+}
+
+/** ========== 抽選（希望人数の一覧） ========== */
+function renderLotteryCounts(dateISO){
+  const target = dateISO || el.datePicker().value;
+  const lot = (storage.getLot()[target]||[]);
+  const counts={};
+  for(const entry of lot){
+    (entry.choices||[]).slice(0,3).forEach((slotId,idx)=>{
+      counts[slotId] ||= [0,0,0];
+      counts[slotId][idx]++;
+    });
+  }
+  const slots1 = generateSlotsForDateRoom(target, "1");
+  const slots2 = generateSlotsForDateRoom(target, "2");
+  const tbody = el.lotteryTbody(); tbody.innerHTML='';
+
+  for(let i=0;i<Math.max(slots1.length, slots2.length);i++){
+    const s1 = slots1[i]; const s2 = slots2[i];
+    if(!s1 || !s2) break;
+
+    const c1 = counts[s1.id] || [0,0,0];
+    const c2 = counts[s2.id] || [0,0,0];
+
+    /* ★どちらかが優先枠なら行ごとに黄色 */
+    const priorityHit = isPrioritySlot(s1) || isPrioritySlot(s2);
+
+    const tr=document.createElement('tr');
+    if (priorityHit) tr.classList.add('priorityRow');
+    tr.innerHTML = `
+      <td class="left col-time"><span class="timecode">${s1.start}</span>–<span class="timecode">${s1.end}</span></td>
+      <td class="center g1 vcut-thick">${c1[0]||'–'}</td>
+      <td class="center g1">${c1[1]||'–'}</td>
+      <td class="center g1">${c1[2]||'–'}</td>
+      <td class="center g2 vcut-thin">${c2[0]||'–'}</td>
+      <td class="center g2">${c2[1]||'–'}</td>
+      <td class="center g2">${c2[2]||'–'}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+/** ========== 編集モーダル ========== */
 const dialog={
   root:()=>document.getElementById('editDialog'),
   close:()=>document.getElementById('closeEdit'),
@@ -410,7 +493,6 @@ function mapNameToUID(name){
   localStorage.setItem(ADMIN_UID_KEY, JSON.stringify(map));
   return uid;
 }
-
 function canOperate(){
   const s=loadSettings();
   if(!s.loginEnabled && !s.deviceLockEnabled) return true;
@@ -423,156 +505,6 @@ function canOperate(){
   }
   return true;
 }
-
-const settingsDialogUI = {
-  root: ()=>document.getElementById('settingsDialog'),
-  loginToggle: ()=>document.getElementById('loginToggle'),
-  deviceToggle: ()=>document.getElementById('deviceToggle'),
-  registerDeviceBtn: ()=>document.getElementById('registerDeviceBtn'),
-  addUserBtn: ()=>document.getElementById('addUserBtn'),
-  newUserName: ()=>document.getElementById('newUserName'),
-  newUserPin: ()=>document.getElementById('newUserPin'),
-  userList: ()=>document.getElementById('userList'),
-  sessionUser: ()=>document.getElementById('sessionUser'),
-  loginBtn: ()=>document.getElementById('loginBtn'),
-  logoutBtn: ()=>document.getElementById('logoutBtn'),
-  close: ()=>document.getElementById('closeSettings')
-};
-
-function renderUserList(){
-  const s=loadSettings();
-  const box=settingsDialogUI.userList();
-  box.innerHTML='';
-  (s.users||[]).forEach(u=>{
-    const row=document.createElement('div');
-    row.className='useritem';
-    row.innerHTML=`<span class="name">${u.name}</span><span class="note">(ID: ${u.id})</span>`;
-    const del=document.createElement('button');
-    del.className='ghost'; del.textContent='削除';
-    del.onclick=()=>{
-      const st=loadSettings();
-      st.users = (st.users||[]).filter(x=>x.id!==u.id);
-      saveSettings(st);
-      if(session().userId===u.id) setSession(null);
-      renderUserList(); renderSessionUI();
-    };
-    row.appendChild(del);
-    box.appendChild(row);
-  });
-}
-function renderSessionUI(){
-  const s=loadSettings();
-  const ses=session();
-  const user = (s.users||[]).find(u=>u.id===ses.userId);
-  settingsDialogUI.sessionUser().textContent = user? user.name : '未ログイン';
-  const sel=document.getElementById('loginUser');
-  sel.innerHTML='';
-  (s.users||[]).forEach(u=>{
-    const opt=document.createElement('option');
-    opt.value=u.id; opt.textContent=u.name; sel.appendChild(opt);
-  });
-}
-
-function populateSettings(){
-  ensureDefaults();
-  const s=loadSettings();
-  settingsDialogUI.loginToggle().checked = !!s.loginEnabled;
-  settingsDialogUI.deviceToggle().checked = !!s.deviceLockEnabled;
-  renderUserList();
-  renderSessionUI();
-  const devId=getDeviceId();
-  settingsDialogUI.registerDeviceBtn().textContent = s.allowedDevices?.includes(devId)? 'この端末は登録済' : 'この端末を登録';
-}
-
-/** ========== 画面生成 ========== */
-function renderHeader(){
-  const m=modeJP();
-  const target = targetDateForMode(m.code);
-  el.modeLabel().textContent = m.label;
-  el.nowLabel().textContent = `${target} ${fmtHM(nowLocal())}`;
-  el.datePicker().value = target;
-  el.lotteryCard().style.display = (m.code!=='INSTANT_TODAY')? 'block':'none';
-  el.instantTitle().textContent = (m.code==='INSTANT_TODAY') ? '当日の予約' : '明日の予約';
-  el.lotteryTitle().textContent = `明日分 抽選希望の集計`;
-}
-
-function renderLotteryCounts(dateISO){
-  const target = dateISO || el.datePicker().value;
-  const lot = (storage.getLot()[target]||[]);
-  const counts={};
-  for(const entry of lot){
-    (entry.choices||[]).slice(0,3).forEach((slotId,idx)=>{
-      counts[slotId] ||= [0,0,0];
-      counts[slotId][idx]++;
-    });
-  }
-  const slots1 = generateSlotsForDateRoom(target, "1");
-  const slots2 = generateSlotsForDateRoom(target, "2");
-  const tbody = el.lotteryTbody(); tbody.innerHTML='';
-
-  for(let i=0;i<Math.max(slots1.length, slots2.length);i++){
-    const s1 = slots1[i]; const s2 = slots2[i];
-    if(!s1 || !s2) break;
-    const c1 = counts[s1.id] || [0,0,0];
-    const c2 = counts[s2.id] || [0,0,0];
-    const priorityHit = isPrioritySlot(s1) || isPrioritySlot(s2);
-
-    const tr=document.createElement('tr');
-    if (priorityHit) tr.classList.add('priorityRow');
-    tr.innerHTML = `
-      <td class="left col-time"><span class="timecode">${s1.start}</span>–<span class="timecode">${s1.end}</span></td>
-      <td class="center g1 vcut-thick">${c1[0]||'–'}</td>
-      <td class="center g1">${c1[1]||'–'}</td>
-      <td class="center g1">${c1[2]||'–'}</td>
-      <td class="center g2 vcut-thin">${c2[0]||'–'}</td>
-      <td class="center g2">${c2[1]||'–'}</td>
-      <td class="center g2">${c2[2]||'–'}</td>
-    `;
-    tbody.appendChild(tr);
-  }
-}
-
-function currentReservation(id){ const res=storage.getRes(); return res[id] || null; }
-function renderInstant(dateISO){
-  const target=dateISO || el.datePicker().value;
-  const res=storage.getRes();
-  const lists={ '1':el.listRoom1(), '2':el.listRoom2() };
-  lists['1'].innerHTML=''; lists['2'].innerHTML='';
-
-  for(const room of CONFIG.rooms){
-    const slots=generateSlotsForDateRoom(target, room);
-    for(const s of slots){
-      const r = res[s.id];
-      const status = r? `<span class="badge ok">予約済</span>` : `<span class="badge info">空き</span>`;
-      const who = r? `${r.name} <small class="note">(${r.source})</small>` : '—';
-      const row=document.createElement('div');
-      row.className='slot';
-      if(isPrioritySlot(s)) row.classList.add('priority');
-      row.innerHTML = `
-        <div class="time">${s.start}–${s.end} ${status}</div>
-        <div class="who">${who}</div>
-        <div class="actions"></div>
-      `;
-      const acts=row.querySelector('.actions');
-      const btnE=document.createElement('button');
-      btnE.className='ghost'; btnE.textContent = r? '編集' : '予約を入れる';
-      btnE.onclick=()=> openEdit(s);
-      const btnC=document.createElement('button');
-      btnC.className='danger'; btnC.textContent='クリア';
-      btnC.onclick=()=>{
-        if(!canOperate()){ alert('操作権限がありません'); return; }
-        const res=storage.getRes(); const existing = res[s.id];
-        if(existing && (existing.source==='instant' || existing.source==='lottery')){
-          if(!confirm('【確認】この枠は一般ユーザーによって確定/応募されたものです。クリアしますか？')) return;
-        }
-        delete res[s.id]; storage.setRes(res); refresh();
-      };
-      acts.append(btnE, btnC);
-      lists[room].appendChild(row);
-    }
-  }
-}
-
 function openEdit(slot){
   if(!canOperate()){ alert('操作権限がありません（ログイン/端末制限をご確認ください）'); return; }
   currentEditingSlot=slot;
@@ -607,17 +539,28 @@ document.getElementById('editSave').onclick=()=>{
   closeEdit(); refresh();
 };
 
+/** ========== ヘッダー/更新 ========== */
+function renderHeader(){
+  const m=modeJP();
+  const target = targetDateForMode(m.code);
+  el.modeLabel().textContent = m.label;
+  el.nowLabel().textContent = `${target} ${fmtHM(nowLocal())}`;
+  el.datePicker().value = target;
+  el.lotteryCard().style.display = (m.code!=='INSTANT_TODAY')? 'block':'none';
+  el.instantTitle().textContent = (m.code==='INSTANT_TODAY') ? '当日の予約状況' : '明日の予約状況';
+  el.lotteryTitle().textContent = `明日分 抽選希望の集計`;
+}
 function refresh(){ renderHeader(); renderInstant(); renderLotteryCounts(); }
 
 /** ========== ゲート駆動 ========== */
 (function gate(){
   ensureDefaults();
 
-  // ボタン動作（ゲート領域内）
-  document.getElementById('btnAllow').onclick = ()=>{
-    allowThisDevice(); setGateDebug(); if(isAllowed()) boot();
-  };
-  document.getElementById('btnReset').onclick = ()=>{
+  // ゲートの手動操作ボタン
+  const allowBtn = document.getElementById('btnAllow');
+  if(allowBtn) allowBtn.onclick = ()=>{ allowThisDevice(); setGateDebug(); if(isAllowed()) boot(); };
+  const resetBtn = document.getElementById('btnReset');
+  if(resetBtn) resetBtn.onclick = ()=>{
     localStorage.removeItem(ADMIN_KEYS.SETTINGS);
     localStorage.removeItem(ADMIN_KEYS.SESSION);
     alert('管理設定を初期化しました。ページを再読み込みします。');
@@ -653,7 +596,68 @@ function refresh(){ renderHeader(); renderInstant(); renderLotteryCounts(); }
   }
 })();
 
-/** ========== 起動時のイベント紐付け ========== */
+/** ========== 起動後の紐付け ========== */
+function session(){ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SESSION)||'{}'); }
+function setSession(obj){ if(obj) localStorage.setItem(ADMIN_KEYS.SESSION, JSON.stringify(obj)); else localStorage.removeItem(ADMIN_KEYS.SESSION); renderSessionUI(); }
+
+const settingsDialogUI = {
+  root: ()=>document.getElementById('settingsDialog'),
+  loginToggle: ()=>document.getElementById('loginToggle'),
+  deviceToggle: ()=>document.getElementById('deviceToggle'),
+  registerDeviceBtn: ()=>document.getElementById('registerDeviceBtn'),
+  addUserBtn: ()=>document.getElementById('addUserBtn'),
+  newUserName: ()=>document.getElementById('newUserName'),
+  newUserPin: ()=>document.getElementById('newUserPin'),
+  userList: ()=>document.getElementById('userList'),
+  sessionUser: ()=>document.getElementById('sessionUser'),
+  loginBtn: ()=>document.getElementById('loginBtn'),
+  logoutBtn: ()=>document.getElementById('logoutBtn'),
+  close: ()=>document.getElementById('closeSettings')
+};
+function renderUserList(){
+  const s=loadSettings();
+  const box=settingsDialogUI.userList();
+  box.innerHTML='';
+  (s.users||[]).forEach(u=>{
+    const row=document.createElement('div');
+    row.className='useritem';
+    row.innerHTML=`<span class="name">${u.name}</span><span class="note">(ID: ${u.id})</span>`;
+    const del=document.createElement('button');
+    del.className='ghost'; del.textContent='削除';
+    del.onclick=()=>{
+      const st=loadSettings();
+      st.users = (st.users||[]).filter(x=>x.id!==u.id);
+      saveSettings(st);
+      if(session().userId===u.id) setSession(null);
+      renderUserList(); renderSessionUI();
+    };
+    row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+function renderSessionUI(){
+  const s=loadSettings();
+  const ses=session();
+  const user = (s.users||[]).find(u=>u.id===ses.userId);
+  settingsDialogUI.sessionUser().textContent = user? user.name : '未ログイン';
+  const sel=document.getElementById('loginUser');
+  sel.innerHTML='';
+  (s.users||[]).forEach(u=>{
+    const opt=document.createElement('option');
+    opt.value=u.id; opt.textContent=u.name; sel.appendChild(opt);
+  });
+}
+function populateSettings(){
+  ensureDefaults();
+  const s=loadSettings();
+  settingsDialogUI.loginToggle().checked = !!s.loginEnabled;
+  settingsDialogUI.deviceToggle().checked = !!s.deviceLockEnabled;
+  renderUserList();
+  renderSessionUI();
+  const devId=getDeviceId();
+  settingsDialogUI.registerDeviceBtn().textContent = s.allowedDevices?.includes(devId)? 'この端末は登録済' : 'この端末を登録';
+}
+
 function boot(){
   document.getElementById('gate').style.display='none';
   document.getElementById('loading').style.display='none';
@@ -682,7 +686,7 @@ function boot(){
     const target = targetDateForMode(m.code);
     el.modeLabel().textContent = m.label;
     el.nowLabel().textContent = `${target} ${fmtHM(nowLocal())}`;
-    el.instantTitle().textContent = (m.code==='INSTANT_TODAY') ? '当日の予約' : '明日の予約';
+    el.instantTitle().textContent = (m.code==='INSTANT_TODAY') ? '当日の予約状況' : '明日の予約状況';
     el.lotteryCard().style.display = (m.code!=='INSTANT_TODAY')? 'block':'none';
   }, 10000);
 }
