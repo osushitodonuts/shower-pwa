@@ -19,9 +19,13 @@
     --shadow:0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
     --panel-br:#bae6fd; --priority:#f9a8d4;
     --g1:#e0f2fe; --g2:#fde7f3; --row-priority:#fef9c3;
+    --fs-body: clamp(13px, 2.9vw, 15px);
+    --fs-small: clamp(11px, 2.6vw, 13px);
+    --fs-tiny: clamp(10px, 2.3vw, 12px);
+    --pad-card: 10px;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;font-size:var(--fs-body)}
   .container{max-width:1100px;margin:0 auto;padding:18px}
   header{border-bottom:1px solid var(--line);background:#fff}
   header .inner{max-width:1100px;margin:0 auto;padding:12px var(--space);display:flex;gap:12px;align-items:center;justify-content:space-between}
@@ -35,37 +39,37 @@
   .meta{display:grid;grid-template-columns:1fr;gap:6px;align-items:center}
   .right{display:flex;gap:8px;align-items:center}
 
-  .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px dashed var(--line);border-radius:999px;background:#f8fafc;white-space:nowrap;min-width:0}
-  input,select,button{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:42px}
+  .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px dashed var(--line);border-radius:999px;background:#f8fafc;white-space:nowrap;min-width:0;font-size:var(--fs-small)}
+  input,select,button{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:40px;font-size:var(--fs-body)}
   button{background:#fff;cursor:pointer}
   button.primary{background:#2563eb;border-color:#1d4ed8;color:#fff}
   button.danger{background:#ef4444;border-color:#dc2626;color:#fff}
   button.ghost{background:#fff;border-color:#d1d5db}
   button.icon{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px}
-  .note{font-size:12px;color:var(--muted)}
+  .note{font-size:var(--fs-small);color:var(--muted)}
 
   .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin:16px 0}
-  .card h3{margin:0;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .card h3{margin:0;padding:12px 14px;border-bottom:1px solid var(--line);font-size:clamp(16px,3.8vw,18px)}
   .section{padding:12px;display:grid;gap:10px}
 
   /* 2列（室1/室2） */
   .grid-rooms{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .room-col{border:1px solid var(--panel-br);border-radius:12px;background:var(--panel);padding:10px}
   .room-col.room2{background:var(--g2); border-color:#fbcfe8;}
-  .room-title{font-weight:800;margin:0 0 8px 0}
+  .room-title{font-weight:800;margin:0 0 8px 0;font-size:clamp(14px,3.4vw,16px)}
   .list{display:grid;grid-template-columns:1fr;gap:8px}
 
-  /* スロットを3段構成に */
-  .slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:10px;display:flex;flex-direction:column;gap:8px}
+  /* スロットを3段構成に（よりコンパクト） */
+  .slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:var(--pad-card);display:flex;flex-direction:column;gap:8px;font-size:var(--fs-small)}
   .slot.priority{border:2px solid var(--priority)}
   .slot .row1{display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:nowrap}
-  .slot .row1 .time{font-weight:700}
-  .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid #cbd5e1;border-radius:999px;padding:4px 8px;font-size:12px;white-space:nowrap}
+  .slot .row1 .time{font-weight:700;font-size:var(--fs-body)}
+  .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid #cbd5e1;border-radius:999px;padding:3px 8px;font-size:var(--fs-tiny);white-space:nowrap}
   .badge.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
   .badge.info{background:#f0f9ff;border-color:#bae6fd;color:#075985}
   .slot .row2{min-height:1em}
   .slot .row3{display:flex;gap:6px;justify-content:flex-end;flex-wrap:nowrap}
-  .slot .row3 button{padding:8px 10px}
+  .slot .row3 button{padding:6px 8px;min-height:34px;font-size:var(--fs-small)}
 
   /* 抽選表 */
   .table-wrap{overflow:auto}
@@ -84,20 +88,53 @@
   .table tbody tr:hover td{background:rgba(59,130,246,0.06)}
   tr.priorityRow td{background:var(--row-priority) !important}
 
-  /* スマホ最適化：3ブロック縦、だが横スクロールは発生させない */
+  /* スマホ最適化：横スクロールなしで室1/2を収める */
   @media (max-width:640px){
-    header .inner{flex-direction:column;align-items:stretch}
+    .container{padding:12px}
+    header .inner{flex-direction:column;align-items:stretch;gap:10px}
     .right{flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
     .right>*{flex:0 0 auto}
     .meta{grid-template-columns:1fr;gap:6px}
-    /* 室1/2は2列のまま。中身を縦3段にしたので横スクロールなしで収まる */
-    .grid-rooms{grid-template-columns:1fr 1fr}
+    .grid-rooms{grid-template-columns:1fr 1fr;gap:8px}
+    .room-col{padding:8px}
+    .list{gap:6px}
+    .slot{padding:8px}
+    input,select,button{min-height:36px;padding:8px 10px}
   }
+
+  /* さらに狭い端末（~380px）で絶対に切らさない最小化 */
+  @media (max-width:400px){
+    :root{ --fs-body: 13px; --fs-small: 12px; --fs-tiny: 11px; --pad-card: 6px; }
+    .grid-rooms{gap:6px}
+    .room-title{margin-bottom:6px}
+    .slot .row3 button{padding:5px 6px;min-height:30px}
+    .pill{padding:4px 8px}
+  }
+
+  /* ======== 共通モーダル（設定/編集/ログインで使用）======== */
+  .dialog{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:1000;padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
+  .dialog::before{content:"";position:absolute;inset:0;background:rgba(15,23,42,.45);backdrop-filter:saturate(120%) blur(2px)}
+  .dialog .panel{position:relative;z-index:1;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);width:min(640px,96vw);max-height:85vh;display:flex;flex-direction:column}
+  .dialog .head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .dialog .body{padding:12px;overflow:auto}
+  .dialog .foot{padding:12px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+  .dialog .row{display:flex;gap:10px;align-items:center;margin:8px 0}
+  .dialog .row input, .dialog .row select{flex:1}
+
+  /* 設定モーダル固有（トグルUI） */
+  .settings .toggle{position:relative;display:inline-flex;align-items:center;width:50px;height:28px}
+  .settings .toggle input{display:none}
+  .settings .toggle .track{position:relative;flex:0 0 100%;height:100%;background:#e5e7eb;border-radius:999px;border:1px solid #d1d5db;transition:.2s}
+  .settings .toggle .thumb{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;border:1px solid #cbd5e1;transition:.2s}
+  .settings .toggle input:checked + .track{background:#2563eb;border-color:#1d4ed8}
+  .settings .toggle input:checked + .track .thumb{left:calc(100% - 26px)}
+  .settings .switchRow{display:flex;align-items:center;gap:12px}
+  .settings .label{min-width:8em}
 
   /* ゲート&ローディング */
   #gate,#loading{max-width:960px;margin:24px auto;padding:24px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow)}
   #gate h2{margin-top:0}
-  pre.debug{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:8px;overflow:auto}
+  pre.debug{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:8px;overflow:auto;font-size:12px}
   </style>
 </head>
 <body>
@@ -137,7 +174,7 @@
     <div class="right">
       <input type="date" id="datePicker" />
       <button class="ghost" id="refreshBtn">再読込</button>
-      <button class="icon" id="settingsBtn" title="設定">⚙️</button>
+      <button class="icon" id="settingsBtn" title="設定" aria-haspopup="dialog">⚙️</button>
     </div>
   </div>
 </header>
@@ -190,20 +227,20 @@
 </div>
 
 <!-- 編集モーダル -->
-<div class="dialog" id="editDialog">
+<div class="dialog" id="editDialog" role="dialog" aria-modal="true" aria-label="枠の編集">
   <div class="panel">
     <div class="head"><div>枠の編集</div><button class="ghost" id="closeEdit">閉じる</button></div>
     <div class="body">
       <div class="row"><span class="pill" id="editCurrentLabel">現在：—</span></div>
-      <div class="row"><input id="editName" placeholder="氏名" style="flex:1" /></div>
+      <div class="row"><input id="editName" placeholder="氏名" /></div>
       <div class="note">※ 枠の移動や時間変更はできません。空きにする場合は各行の「クリア」を使ってください。</div>
     </div>
     <div class="foot"><button class="primary" id="editSave">保存</button></div>
   </div>
 </div>
 
-<!-- 設定モーダル -->
-<div class="dialog settings" id="settingsDialog">
+<!-- 設定モーダル（常にポップアップで中央表示・独立スクロール） -->
+<div class="dialog settings" id="settingsDialog" role="dialog" aria-modal="true" aria-label="設定">
   <div class="panel">
     <div class="head"><div>設定</div><button class="ghost" id="closeSettings">閉じる</button></div>
     <div class="body">
@@ -232,11 +269,12 @@
       </div>
       <div class="note">※ デモ実装：localStorage を使用（PINは平文）。本番はサーバ＋ハッシュ化推奨。</div>
     </div>
+    <div class="foot"><button class="ghost" id="settingsCloseBottom">閉じる</button></div>
   </div>
 </div>
 
 <!-- ログインモーダル -->
-<div class="dialog" id="loginDialog">
+<div class="dialog" id="loginDialog" role="dialog" aria-modal="true" aria-label="ログイン">
   <div class="panel">
     <div class="head"><div>ログイン</div><button class="ghost" id="closeLogin">閉じる</button></div>
     <div class="body">
@@ -414,7 +452,7 @@ function renderInstant(dateISO){
       const acts=row.querySelector('.row3');
 
       const btnE=document.createElement('button');
-      btnE.className='ghost'; btnE.textContent = r? '編集' : '予約を入れる';
+      btnE.className='ghost'; btnE.textContent = r? '編集' : '予約追加';
       btnE.onclick=()=> openEdit(s);
 
       const btnC=document.createElement('button');
@@ -518,7 +556,13 @@ function closeEdit(){
   dialog.root().style.display='none'; currentEditingSlot=null;
   document.body.style.overflow='';
 }
-document.getElementById('closeEdit').onclick=closeEdit;
+// 閉じる操作の強化：ESCキー・背景クリック
+(function initDialogClose(){
+  document.getElementById('closeEdit').onclick=closeEdit;
+  document.getElementById('editDialog').addEventListener('click', (e)=>{ if(e.target.id==='editDialog') closeEdit(); });
+  window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') { closeEdit(); closeSettingsPanel(); closeLoginPanel(); }});
+})();
+
 document.getElementById('editSave').onclick=()=>{
   if(!currentEditingSlot) return;
   const name=(dialog.name().value||"").trim();
@@ -612,7 +656,8 @@ const settingsDialogUI = {
   sessionUser: ()=>document.getElementById('sessionUser'),
   loginBtn: ()=>document.getElementById('loginBtn'),
   logoutBtn: ()=>document.getElementById('logoutBtn'),
-  close: ()=>document.getElementById('closeSettings')
+  close: ()=>document.getElementById('closeSettings'),
+  closeBottom: ()=>document.getElementById('settingsCloseBottom')
 };
 function renderUserList(){
   const s=loadSettings();
@@ -658,24 +703,32 @@ function populateSettings(){
   settingsDialogUI.registerDeviceBtn().textContent = s.allowedDevices?.includes(devId)? 'この端末は登録済' : 'この端末を登録';
 }
 
+function openSettingsPanel(){ settingsDialogUI.root().style.display='flex'; document.body.style.overflow='hidden'; }
+function closeSettingsPanel(){ settingsDialogUI.root().style.display='none'; document.body.style.overflow=''; }
+function openLoginPanel(){ document.getElementById('loginDialog').style.display='flex'; document.body.style.overflow='hidden'; }
+function closeLoginPanel(){ document.getElementById('loginDialog').style.display='none'; document.body.style.overflow=''; }
+
 function boot(){
   document.getElementById('gate').style.display='none';
   document.getElementById('loading').style.display='none';
   el.hdr().style.display='block';
   el.main().style.display='block';
 
-  document.getElementById('settingsBtn').onclick=()=>{ populateSettings(); settingsDialogUI.root().style.display='flex'; document.body.style.overflow='hidden'; };
-  settingsDialogUI.close().onclick=()=>{ settingsDialogUI.root().style.display='none'; document.body.style.overflow=''; };
+  document.getElementById('settingsBtn').onclick=()=>{ populateSettings(); openSettingsPanel(); };
+  settingsDialogUI.close().onclick=closeSettingsPanel;
+  settingsDialogUI.closeBottom().onclick=closeSettingsPanel;
+  settingsDialogUI.root().addEventListener('click', (e)=>{ if(e.target.id==='settingsDialog') closeSettingsPanel(); });
 
   settingsDialogUI.loginToggle().onchange=()=>{ const s=loadSettings(); s.loginEnabled = settingsDialogUI.loginToggle().checked; saveSettings(s); };
   settingsDialogUI.deviceToggle().onchange=()=>{ const s=loadSettings(); s.deviceLockEnabled = settingsDialogUI.deviceToggle().checked; saveSettings(s); };
   settingsDialogUI.registerDeviceBtn().onclick=()=>{ const s=loadSettings(); s.allowedDevices ||= []; const id=getDeviceId(); if(!s.allowedDevices.includes(id)) s.allowedDevices.push(id); saveSettings(s); populateSettings(); };
   settingsDialogUI.addUserBtn().onclick=()=>{ const name=(settingsDialogUI.newUserName().value||'').trim(); const pin=(settingsDialogUI.newUserPin().value||'').trim(); if(!name||pin.length!==4){ alert('名前と4桁PINを入力してください'); return; } const s=loadSettings(); s.users ||= []; s.users.push({id:`u-${crypto.randomUUID()}`, name, pin}); saveSettings(s); settingsDialogUI.newUserName().value=''; settingsDialogUI.newUserPin().value=''; renderUserList(); renderSessionUI(); };
-  settingsDialogUI.loginBtn().onclick=()=>{ const s=loadSettings(); if(!(s.users||[]).length){ alert('先にユーザーを登録してください'); return; } document.getElementById('loginDialog').style.display='flex'; document.body.style.overflow='hidden'; };
+  settingsDialogUI.loginBtn().onclick=()=>{ const s=loadSettings(); if(!(s.users||[]).length){ alert('先にユーザーを登録してください'); return; } openLoginPanel(); };
   settingsDialogUI.logoutBtn().onclick=()=> setSession(null);
 
-  document.getElementById('closeLogin').onclick=()=>{ document.getElementById('loginDialog').style.display='none'; document.body.style.overflow=''; };
-  document.getElementById('doLogin').onclick=()=>{ const s=loadSettings(); const id=document.getElementById('loginUser').value; const pin=(document.getElementById('loginPin').value||'').trim(); const u=(s.users||[]).find(x=>x.id===id); if(!u){ alert('ユーザーが見つかりません'); return; } if(u.pin!==pin){ alert('PINが違います'); return; } setSession({userId:u.id}); document.getElementById('loginDialog').style.display='none'; document.body.style.overflow=''; populateSettings(); };
+  document.getElementById('closeLogin').onclick=closeLoginPanel;
+  document.getElementById('loginDialog').addEventListener('click', (e)=>{ if(e.target.id==='loginDialog') closeLoginPanel(); });
+  document.getElementById('doLogin').onclick=()=>{ const s=loadSettings(); const id=document.getElementById('loginUser').value; const pin=(document.getElementById('loginPin').value||'').trim(); const u=(s.users||[]).find(x=>x.id===id); if(!u){ alert('ユーザーが見つかりません'); return; } if(u.pin!==pin){ alert('PINが違います'); return; } setSession({userId:u.id}); closeLoginPanel(); populateSettings(); };
 
   document.getElementById('refreshBtn').onclick=()=> refresh();
   document.getElementById('datePicker').onchange=()=>{ const picked=document.getElementById('datePicker').value; renderInstant(picked); renderLotteryCounts(picked); };
