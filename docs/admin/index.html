@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <!-- admin/ 配下なので manifest は 1階層上 -->
-  <link rel="manifest" href="../manifest.webmanifest">
+  <!-- ★ GitHub Pagesで確実に解決するよう、ルート相対パスを使用 -->
+  <link rel="manifest" href="/shower-pwa/manifest.webmanifest">
   <meta name="theme-color" content="#1e40af">
-  <!-- iOS用アイコン（相対パスは1階層上） -->
-  <link rel="apple-touch-icon" href="../newicons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="../newicons/icon-180.png">
+  <link rel="apple-touch-icon" href="/shower-pwa/newicons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/shower-pwa/newicons/icon-180.png">
 
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -104,16 +103,16 @@
 </head>
 <body>
 
-<!-- アクセス制御ゲート（初期はこれが見える） -->
+<!-- アクセス制御ゲート -->
 <div id="gate" style="display:none">
   <h2>アクセス権がありません</h2>
   <p>管理者専用URLからアクセスしてください。</p>
-  <p class="note">初回登録用リンク例：<br>
-    <code>https://&lt;あなた&gt;.github.io/shower-pwa/admin/?key=kagoshimauniv_peds</code>
+  <p class="note">初回登録リンク例：<br>
+    <code>https://osushitodonuts.github.io/shower-pwa/admin/?key=kagoshimauniv_peds</code>
   </p>
 </div>
 
-<!-- 初期登録中の表示 -->
+<!-- 初期登録中 -->
 <div id="loading" style="display:none">
   <b>管理者画面の初期設定中...</b><br>しばらくお待ちください。
 </div>
@@ -242,29 +241,38 @@
 </div>
 
 <script>
-/** ====== 管理者アクセス鍵（初回 only）====== */
+/** ================= 管理者アクセス鍵（初回 only）================= */
 const ADMIN_ACCESS_KEY = "kagoshimauniv_peds";
 
-/** ====== 相対パス注意：admin/ から ../sw.js を登録 ====== */
+/** ================= 相対パス注意：/shower-pwa/sw.js を登録 ================= */
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('../sw.js').catch(console.error);
+  navigator.serviceWorker.register('/shower-pwa/sw.js').catch(console.error);
 }
 
-/** ====== ゲート制御（?key=... で端末登録 → 以後はURLだけで入れる） ====== */
-const ADMIN_KEYS = { SETTINGS:'sr_admin_settings', SESSION:'sr_admin_session', DEVICE:'sr_admin_device_id' };
+/** ================== ストレージキー ================== */
+const ADMIN_KEYS = {
+  SETTINGS:'sr_admin_settings',
+  SESSION:'sr_admin_session',
+  DEVICE:'sr_admin_device_id'
+};
+
+/** ================== Gateユーティリティ ================== */
 function getDeviceId(){
   let v = localStorage.getItem(ADMIN_KEYS.DEVICE);
   if(!v){ v = `dev-${crypto.randomUUID()}`; localStorage.setItem(ADMIN_KEYS.DEVICE, v); }
   return v;
 }
-function loadSettings(){ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SETTINGS)||'{}'); }
+function loadSettings(){
+  try { return JSON.parse(localStorage.getItem(ADMIN_KEYS.SETTINGS)||'{}'); }
+  catch(e){ return {}; }
+}
 function saveSettings(s){ localStorage.setItem(ADMIN_KEYS.SETTINGS, JSON.stringify(s)); }
 function ensureDefaults(){
-  const s = loadSettings();
-  s.loginEnabled ??= false;
-  s.deviceLockEnabled ??= true;  // 既定で端末制限ONに
-  s.users ??= [];
-  s.allowedDevices ??= [];
+  const s = loadSettings() || {};
+  if (typeof s.loginEnabled === 'undefined') s.loginEnabled = false;
+  if (typeof s.deviceLockEnabled === 'undefined') s.deviceLockEnabled = true; // 既定ON
+  if (!Array.isArray(s.users)) s.users = [];
+  if (!Array.isArray(s.allowedDevices)) s.allowedDevices = [];
   saveSettings(s);
 }
 function allowThisDevice(){
@@ -284,25 +292,36 @@ function isAllowed(){
 function stripKeyFromURL(){
   const url = new URL(location.href);
   url.searchParams.delete('key');
+  // 万一 #key= で来た場合も消す
+  if (url.hash.includes('key=')) {
+    const h = new URLSearchParams(url.hash.replace(/^#/, ''));
+    h.delete('key');
+    const newHash = h.toString();
+    url.hash = newHash ? '#' + newHash : '';
+  }
   history.replaceState(null, '', url.toString());
 }
 
+/** ================== 初回ゲート処理 ================== */
 (async function gate(){
   ensureDefaults();
-  const params = new URLSearchParams(location.search);
-  const key = params.get('key');
 
-  // 初回登録：?key=... が一致したら端末登録
+  // key を query または hash から取得（空白・全角なども除去）
+  const search = new URLSearchParams(location.search);
+  const hash = new URLSearchParams((location.hash||'').replace(/^#/, ''));
+  const keyRaw = search.get('key') ?? hash.get('key') ?? '';
+  const key = (keyRaw || '').trim();
+  console.log('[admin] key:', key || '(none)');
+
   if(key){
     document.getElementById('loading').style.display = 'block';
     if(key === ADMIN_ACCESS_KEY){
       allowThisDevice();
-      // 見やすいように小休止 → keyを消してリロード不要で画面継続
       setTimeout(()=>{
         stripKeyFromURL();
         document.getElementById('loading').style.display = 'none';
-        boot(); // そのまま本体へ
-      }, 400);
+        boot();
+      }, 250);
       return;
     }else{
       document.getElementById('loading').style.display = 'none';
@@ -319,11 +338,19 @@ function stripKeyFromURL(){
   }
 })();
 
-/** ====== ここから管理UI本体 ====== */
+/** ================== ここから管理UI本体 ================== */
 function session(){ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SESSION)||'{}'); }
-function setSession(obj){ if(obj) localStorage.setItem(ADMIN_KEYS.SESSION, JSON.stringify(obj)); else localStorage.removeItem(ADMIN_KEYS.SESSION); renderSessionUI(); }
+function setSession(obj){
+  if(obj) localStorage.setItem(ADMIN_KEYS.SESSION, JSON.stringify(obj));
+  else localStorage.removeItem(ADMIN_KEYS.SESSION);
+  renderSessionUI();
+}
 
-const CONFIG = { rooms:["1","2"], slotStart:"09:00", slotEnd:"21:00", slotMinutes:20,
+const CONFIG = {
+  rooms:["1","2"],
+  slotStart:"09:00",
+  slotEnd:"21:00",
+  slotMinutes:20,
   priority: { "1": { start: "14:00", end: "16:00" }, "2": { start: "13:00", end: "16:00" } }
 };
 const KEY = { NAME:"sr_name", UID:"sr_uid", RES:"sr_reservations", LOT:"sr_lottery", PART:"sr_lot_participants" };
@@ -437,6 +464,7 @@ function canOperate(){
   return true;
 }
 
+/** ===== 設定モーダル制御 ===== */
 const settingsDialog = {
   root: ()=>document.getElementById('settingsDialog'),
   loginToggle: ()=>document.getElementById('loginToggle'),
@@ -495,6 +523,7 @@ function renderSessionUI(){
     opt.value=u.id; opt.textContent=u.name; sel.appendChild(opt);
   });
 }
+
 function boot(){
   // 本体表示に切替
   document.getElementById('gate').style.display='none';
