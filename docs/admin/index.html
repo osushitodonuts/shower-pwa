@@ -597,20 +597,26 @@ function fitRoomsToViewport(){
   const grid = el.gridRooms();
   if(!wrap || !grid) return;
 
-  // レンダ後に計測（レイアウトが落ち着いてから）
-  requestAnimationFrame(()=>{
-    // 一旦リセット
-    grid.style.transform = 'none';
-    wrap.style.height = 'auto';
+  // いったんリセットして“未スケール”の素のサイズを取得
+  grid.style.transform = 'none';
+  wrap.style.height = 'auto';
 
-    const avail = Math.floor(wrap.clientWidth);   // 利用可能幅（整数化でサブピクセル誤差対策）
-    const actual = Math.ceil(grid.scrollWidth);   // 実必要幅（切れ対策で天井）
+  const availW  = Math.floor(wrap.clientWidth);   // 利用可能幅（端欠け抑制のため丸め）
+  const actualW = Math.ceil(grid.scrollWidth);    // 必要幅（小数切上げ）
+  const actualH = grid.offsetHeight;              // ★未スケール時の高さ（これを基準にする）
 
-    let scale = 1;
-    if(actual > avail){
-      scale = (avail - 1) / actual; // 右端の1pxクリップ対策
-      scale = Math.max(0.70, Math.min(1, scale));
-    }
+  let scale = 1;
+  if(actualW > availW){
+    scale = (availW - 1) / actualW; // 右端1pxのクリップ回避
+    scale = Math.max(0.70, Math.min(1, scale));
+  }
+
+  // スケール適用
+  grid.style.transform = `scale(${scale})`;
+  // ★wrapの高さは“未スケール高さ×scale”で算出（getBoundingClientRectは使わない）
+  const h = Math.ceil(actualH * scale) + 2; // 2pxマージン
+  wrap.style.height = `${h}px`;
+}
     grid.style.transform = `scale(${scale})`;
 
     // スケール後の高さを確保（+2pxでボーダー分の逃げ）
