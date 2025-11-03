@@ -53,22 +53,23 @@
   .section{padding:12px;display:grid;gap:10px}
 
   /* 2列（室1/室2） */
-  .grid-rooms{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .room-col{border:1px solid var(--panel-br);border-radius:12px;background:var(--panel);padding:10px}
+  .grid-rooms-wrap{position:relative; width:100%; overflow:hidden; /* スケールで高さを確保するため明示 */}
+  .grid-rooms{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px; transform-origin:top left;}
+  .room-col{border:1px solid var(--panel-br);border-radius:12px;background:var(--panel);padding:10px;min-width:0}
   .room-col.room2{background:var(--g2); border-color:#fbcfe8;}
   .room-title{font-weight:800;margin:0 0 8px 0;font-size:clamp(14px,3.4vw,16px)}
-  .list{display:grid;grid-template-columns:1fr;gap:8px}
+  .list{display:grid;grid-template-columns:1fr;gap:8px;min-width:0}
 
   /* スロットを3段構成に（よりコンパクト） */
-  .slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:var(--pad-card);display:flex;flex-direction:column;gap:8px;font-size:var(--fs-small)}
+  .slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:var(--pad-card);display:flex;flex-direction:column;gap:8px;font-size:var(--fs-small);min-width:0}
   .slot.priority{border:2px solid var(--priority)}
-  .slot .row1{display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:nowrap}
+  .slot .row1{display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:nowrap;min-width:0}
   .slot .row1 .time{font-weight:700;font-size:var(--fs-body)}
   .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid #cbd5e1;border-radius:999px;padding:3px 8px;font-size:var(--fs-tiny);white-space:nowrap}
   .badge.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
   .badge.info{background:#f0f9ff;border-color:#bae6fd;color:#075985}
-  .slot .row2{min-height:1em}
-  .slot .row3{display:flex;gap:6px;justify-content:flex-end;flex-wrap:nowrap}
+  .slot .row2{min-height:1em;min-width:0}
+  .slot .row3{display:flex;gap:6px;justify-content:flex-end;flex-wrap:nowrap;min-width:0}
   .slot .row3 button{padding:6px 8px;min-height:34px;font-size:var(--fs-small)}
 
   /* 抽選表 */
@@ -95,7 +96,7 @@
     .right{flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
     .right>*{flex:0 0 auto}
     .meta{grid-template-columns:1fr;gap:6px}
-    .grid-rooms{grid-template-columns:1fr 1fr;gap:8px}
+    .grid-rooms{gap:8px}
     .room-col{padding:8px}
     .list{gap:6px}
     .slot{padding:8px}
@@ -131,34 +132,17 @@
   .settings .switchRow{display:flex;align-items:center;gap:12px}
   .settings .label{min-width:8em}
 
-  /* ゲート&ローディング */
-  #gate,#loading{max-width:960px;margin:24px auto;padding:24px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow)}
-  #gate h2{margin-top:0}
+  /* ゲート&ローディング（リンクや許可ボタンは完全に非表示）*/
+  #gate{display:none}
+  #loading{max-width:960px;margin:24px auto;padding:24px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow)}
   pre.debug{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:8px;overflow:auto;font-size:12px}
   </style>
 </head>
 <body>
 
-<!-- アクセス制御ゲート -->
-<div id="gate" style="display:none">
-  <h2>アクセス権がありません</h2>
-  <p>管理者専用URLからアクセスしてください。</p>
-  <p class="note">初回登録リンク：<br>
-    <code>https://osushitodonuts.github.io/shower-pwa/admin/?key=kagoshimauniv_peds</code>
-  </p>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-    <button id="btnAllow" class="ghost">この端末を手動で許可</button>
-    <button id="btnReset" class="danger">管理設定をリセット</button>
-  </div>
-  <details style="margin-top:8px">
-    <summary>デバッグ情報を表示</summary>
-    <pre class="debug" id="dbg">loading…</pre>
-  </details>
-</div>
-
-<!-- 初期登録中 -->
+<!-- 最小限ローディング（gateは完全非表示） -->
 <div id="loading" style="display:none">
-  <b>管理者画面の初期設定中...</b><br>しばらくお待ちください。
+  <b>管理者画面の初期設定中...</b>
 </div>
 
 <!-- 本体UI -->
@@ -184,14 +168,16 @@
   <div class="card" id="instantCard">
     <h3 id="instantTitle">当日の予約状況</h3>
     <div class="section">
-      <div class="grid-rooms">
-        <div class="room-col">
-          <h4 class="room-title">シャワー室1</h4>
-          <div class="list" id="listRoom1"></div>
-        </div>
-        <div class="room-col room2">
-          <h4 class="room-title">シャワー室2</h4>
-          <div class="list" id="listRoom2"></div>
+      <div id="roomsWrap" class="grid-rooms-wrap">
+        <div id="gridRooms" class="grid-rooms">
+          <div class="room-col">
+            <h4 class="room-title">シャワー室1</h4>
+            <div class="list" id="listRoom1"></div>
+          </div>
+          <div class="room-col room2">
+            <h4 class="room-title">シャワー室2</h4>
+            <div class="list" id="listRoom2"></div>
+          </div>
         </div>
       </div>
       <div class="note">管理者は制限なく編集できます（同一人物が複数枠でもOK）。</div>
@@ -239,7 +225,7 @@
   </div>
 </div>
 
-<!-- 設定モーダル（常にポップアップで中央表示・独立スクロール） -->
+<!-- 設定モーダル（中央表示・独立スクロール） -->
 <div class="dialog settings" id="settingsDialog" role="dialog" aria-modal="true" aria-label="設定">
   <div class="panel">
     <div class="head"><div>設定</div><button class="ghost" id="closeSettings">閉じる</button></div>
@@ -322,7 +308,7 @@ function allowThisDevice(){
   if(!s.allowedDevices.includes(id)){ s.allowedDevices.push(id); saveSettings(s); }
 }
 
-/** ========== 初回ゲート ========== */
+/** ========== 初回ゲート（外部にURLや許可UIを一切出さない） ========== */
 function stripKeyFromURL(){
   const url = new URL(location.href);
   url.searchParams.delete('key');
@@ -333,12 +319,6 @@ function isAllowed(){
   if(!s.deviceLockEnabled) return true;
   const id = getDeviceId();
   return s.allowedDevices.includes(id);
-}
-function setGateDebug(){
-  const s = loadSettings();
-  const dbg = { deviceId: getDeviceId(), settings: s };
-  const el = document.getElementById('dbg');
-  if(el) el.textContent = JSON.stringify(dbg,null,2);
 }
 
 /** ========== 予約/抽選ロジック ========== */
@@ -422,10 +402,12 @@ const el={
   listRoom2:()=>document.getElementById('listRoom2'),
   settingsBtn:()=>document.getElementById('settingsBtn'),
   hdr:()=>document.getElementById('hdr'),
-  main:()=>document.getElementById('main')
+  main:()=>document.getElementById('main'),
+  roomsWrap:()=>document.getElementById('roomsWrap'),
+  gridRooms:()=>document.getElementById('gridRooms')
 };
 
-/** ========== 手動編集スロット描画（3段カード） ========== */
+/** ========== スロット描画 ========== */
 function currentReservation(id){ const res=storage.getRes(); return res[id] || null; }
 function renderInstant(dateISO){
   const target=dateISO || el.datePicker().value;
@@ -470,6 +452,7 @@ function renderInstant(dateISO){
       lists[room].appendChild(row);
     }
   }
+  fitRoomsToViewport();
 }
 
 /** ========== 抽選（希望人数の一覧） ========== */
@@ -494,7 +477,6 @@ function renderLotteryCounts(dateISO){
     const c1 = counts[s1.id] || [0,0,0];
     const c2 = counts[s2.id] || [0,0,0];
 
-    /* ★どちらかが優先枠なら行ごとに黄色 */
     const priorityHit = isPrioritySlot(s1) || isPrioritySlot(s2);
 
     const tr=document.createElement('tr');
@@ -596,20 +578,31 @@ function renderHeader(){
 }
 function refresh(){ renderHeader(); renderInstant(); renderLotteryCounts(); }
 
-/** ========== ゲート駆動 ========== */
+/** ========== レイアウト自動フィット（スマホ幅に対して縮尺最適化） ========== */
+function fitRoomsToViewport(){
+  const wrap = el.roomsWrap();
+  const grid = el.gridRooms();
+  if(!wrap || !grid) return;
+
+  // 一時的にスケールをリセットして自然幅を測定
+  grid.style.transform = 'none';
+  wrap.style.height = 'auto';
+
+  const avail = wrap.clientWidth;        // 利用可能幅
+  const actual = grid.scrollWidth;       // 実際に必要な幅
+  let scale = 1;
+  if(actual > avail){ scale = Math.max(0.75, avail / actual); } // 下限0.75まで縮小
+
+  grid.style.transform = `scale(${scale})`;
+  // 元の高さにスケールを掛けてラップ要素に確保
+  const h = grid.offsetHeight * scale;
+  wrap.style.height = `${h}px`;
+}
+window.addEventListener('resize', fitRoomsToViewport, {passive:true});
+
+/** ========== ゲート駆動（URLや許可UIは見せない） ========== */
 (function gate(){
   ensureDefaults();
-
-  // ゲートの手動操作ボタン
-  const allowBtn = document.getElementById('btnAllow');
-  if(allowBtn) allowBtn.onclick = ()=>{ allowThisDevice(); setGateDebug(); if(isAllowed()) boot(); };
-  const resetBtn = document.getElementById('btnReset');
-  if(resetBtn) resetBtn.onclick = ()=>{
-    localStorage.removeItem(ADMIN_KEYS.SETTINGS);
-    localStorage.removeItem(ADMIN_KEYS.SESSION);
-    alert('管理設定を初期化しました。ページを再読み込みします。');
-    location.reload();
-  };
 
   const params = new URLSearchParams(location.search);
   const key = params.get('key');
@@ -622,21 +615,19 @@ function refresh(){ renderHeader(); renderInstant(); renderLotteryCounts(); }
         stripKeyFromURL();
         document.getElementById('loading').style.display = 'none';
         boot();
-      }, 300);
+      }, 200);
       return;
-    }else{
-      document.getElementById('loading').style.display = 'none';
-      setGateDebug();
-      document.getElementById('gate').style.display = 'block';
+    } else {
+      // 不正キー時も何も出さない（情報を一切漏らさない）
       return;
     }
   }
 
   if(isAllowed()){
     boot();
-  }else{
-    setGateDebug();
-    document.getElementById('gate').style.display = 'block';
+  } else {
+    // 端末未登録時：画面には何も出さない（静かにブロック）
+    return;
   }
 })();
 
@@ -709,8 +700,6 @@ function openLoginPanel(){ document.getElementById('loginDialog').style.display=
 function closeLoginPanel(){ document.getElementById('loginDialog').style.display='none'; document.body.style.overflow=''; }
 
 function boot(){
-  document.getElementById('gate').style.display='none';
-  document.getElementById('loading').style.display='none';
   el.hdr().style.display='block';
   el.main().style.display='block';
 
