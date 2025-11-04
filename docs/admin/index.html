@@ -313,7 +313,7 @@ function allowThisDevice(){
   if(!s.allowedDevices.includes(id)){ s.allowedDevices.push(id); saveSettings(s); }
 }
 
-/** ========== 初回ゲート ========== */
+/** ========== 初回ゲート補助 ========== */
 function stripKeyFromURL(){
   const url = new URL(location.href);
   url.searchParams.delete('key');
@@ -610,39 +610,6 @@ function fitRoomsToViewport(){
 }
 window.addEventListener('resize', fitRoomsToViewport, {passive:true});
 
-/** ========== ゲート駆動 ========== */
-(function gate(){
-  ensureDefaults();
-
-  const params = new URLSearchParams(location.search);
-  const key = params.get('key');
-
-  if(key){
-    el.loading().style.display = 'block';
-    if(key === ADMIN_ACCESS_KEY){
-      allowThisDevice();
-      setTimeout(()=>{
-        stripKeyFromURL();
-        el.loading().style.display = 'none';
-        boot();
-      }, 150);
-      return;
-    } else {
-      // 不正キー：静かに失敗（何も表示しないより、明示ブロック）
-      el.blocked().style.display = 'block';
-      return;
-    }
-  }
-
-  if(isAllowed()){
-    boot();
-  } else {
-    // 端末未登録・ログイン要件未達時は明示
-    el.blocked().style.display = 'block';
-    return;
-  }
-})();
-
 /** ========== 起動後の紐付け ========== */
 function session(){ return JSON.parse(localStorage.getItem(ADMIN_KEYS.SESSION)||'{}'); }
 function setSession(obj){ if(obj) localStorage.setItem(ADMIN_KEYS.SESSION, JSON.stringify(obj)); else localStorage.removeItem(ADMIN_KEYS.SESSION); renderSessionUI(); }
@@ -743,6 +710,43 @@ function boot(){
     el.instantTitle().textContent = (m.code==='INSTANT_TODAY') ? '当日の予約状況' : '明日の予約状況';
     el.lotteryCard().style.display = (m.code!=='INSTANT_TODAY')? 'block':'none';
   }, 10000);
+}
+
+/** ========== ゲート駆動（※即時実行をやめ、評価完了後に実行） ========== */
+function gate(){
+  ensureDefaults();
+
+  const params = new URLSearchParams(location.search);
+  const key = params.get('key');
+
+  if(key){
+    el.loading().style.display = 'block';
+    if(key === ADMIN_ACCESS_KEY){
+      allowThisDevice();
+      setTimeout(()=>{
+        stripKeyFromURL();
+        el.loading().style.display = 'none';
+        boot();
+      }, 150);
+      return;
+    } else {
+      el.blocked().style.display = 'block';
+      return;
+    }
+  }
+
+  if(isAllowed()){
+    boot();
+  } else {
+    el.blocked().style.display = 'block';
+    return;
+  }
+}
+// スクリプト評価完了後に gate() をキュー（初期化順の競合を根絶）
+if (typeof queueMicrotask === 'function') {
+  queueMicrotask(gate);
+} else {
+  setTimeout(gate, 0);
 }
 </script>
 </body>
