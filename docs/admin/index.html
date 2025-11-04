@@ -545,12 +545,15 @@ function closeEdit(){
   dialog.root().style.display='none'; currentEditingSlot=null;
   document.body.style.overflow='';
 }
-// 閉じる操作の強化：ESCキー・背景クリック
-(function initDialogClose(){
-  document.getElementById('closeEdit').onclick=closeEdit;
-  document.getElementById('editDialog').addEventListener('click', (e)=>{ if(e.target.id==='editDialog') closeEdit(); });
+
+/* ====== 閉じる操作の強化：ESCキー・背景クリック（DOM構築後に実行） ====== */
+document.addEventListener('DOMContentLoaded', function initDialogClose(){
+  const closeBtn = document.getElementById('closeEdit');
+  const dlg = document.getElementById('editDialog');
+  if (closeBtn) closeBtn.onclick = closeEdit;
+  if (dlg) dlg.addEventListener('click', (e)=>{ if(e.target.id==='editDialog') closeEdit(); });
   window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') { closeEdit(); closeSettingsPanel(); closeLoginPanel(); }});
-})();
+});
 
 document.getElementById('editSave').onclick=()=>{
   if(!currentEditingSlot) return;
@@ -745,6 +748,8 @@ function gate(){
 // スクリプト評価完了後に gate() をキュー（初期化順の競合を根絶）
 if (typeof queueMicrotask === 'function') {
   queueMicrotask(gate);
+} else if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', gate);
 } else {
   setTimeout(gate, 0);
 }
