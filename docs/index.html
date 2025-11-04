@@ -87,6 +87,35 @@
   @media (max-width:420px){ .slots{grid-template-columns:1fr} }
   </style>
 </head>
+
+<script>
+// --- 管理キー設定 ---
+const ADMIN_KEY = "kagoshimauniv_peds";  // ← 必要に応じて変更
+const ADMIN_URL = `https://osushitodonuts.github.io/shower-pwa/admin/?key=${ADMIN_KEY}`;
+const STORAGE_FLAG = "sr_admin_verified";
+
+// --- key検証処理 ---
+(function(){
+  const params = new URLSearchParams(location.search);
+  const key = params.get("key");
+  if (key === ADMIN_KEY) {
+    // 有効なkeyで開いた → 許可を保存
+    localStorage.setItem(STORAGE_FLAG, "1");
+    history.replaceState(null, "", location.origin + location.pathname); // keyをURLから除去
+    console.log("✅ 管理端末として登録されました");
+  } else {
+    // keyなし or 不正key → 許可確認
+    const verified = localStorage.getItem(STORAGE_FLAG);
+    if (!verified) {
+      // 未登録なら key付きURLへ強制リダイレクト
+      console.log("🔒 管理キー未登録 → 認証ページへ転送");
+      location.href = ADMIN_URL;
+    }
+  }
+})();
+</script>
+
+
 <body>
 
   <!-- ======（ここからは元のHTMLそのまま）====== -->
