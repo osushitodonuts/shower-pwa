@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>シャワー室 予約管理（管理者）</title>
   <!-- ルート絶対パスで統一 -->
   <link rel="manifest" href="/shower-pwa/manifest.webmanifest">
   <meta name="theme-color" content="#1e40af">
   <link rel="apple-touch-icon" href="/shower-pwa/newicons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/shower-pwa/newicons/icon-180.png">
-
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>シャワー室 予約管理（管理者）</title>
 
   <style>
   :root{
@@ -54,7 +53,7 @@
   .section{padding:12px;display:grid;gap:10px}
 
   /* 2列（室1/室2） */
-  .grid-rooms-wrap{position:relative; width:100%; overflow:hidden; /* スケールで高さを確保するため明示 */}
+  .grid-rooms-wrap{position:relative; width:100%; overflow:hidden;}
   .grid-rooms{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px; transform-origin:top left; will-change:transform;}
   .room-col{border:1px solid var(--panel-br);border-radius:12px;background:var(--panel);padding:10px;min-width:0}
   .room-col.room2{background:var(--g2); border-color:#fbcfe8;}
@@ -63,7 +62,7 @@
 
   /* スロットを3段構成に（よりコンパクト） */
   .slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:var(--pad-card);display:flex;flex-direction:column;gap:8px;font-size:var(--fs-small);min-width:0}
-  .slot.priority{border:1px solid var(--line); background:var(--priority-slot);}
+  .slot.priority{border:1px solid var(--line); background:var(--priority-slot);} /* 平日かつ優先時間帯にのみ */
   .slot .row1{display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:nowrap;min-width:0}
   .slot .row1 .time{font-weight:700;font-size:var(--fs-body)}
   .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid #cbd5e1;border-radius:999px;padding:3px 8px;font-size:var(--fs-tiny);white-space:nowrap}
@@ -102,21 +101,10 @@
     .list{gap:6px}
     .slot{padding:8px}
     input,select,button{min-height:36px;padding:8px 10px}
-    /* カード枠を必ず画面幅に収める */
     .card{border-width:1px;}
   }
-    header .inner{flex-direction:column;align-items:stretch;gap:10px}
-    .right{flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
-    .right>*{flex:0 0 auto}
-    .meta{grid-template-columns:1fr;gap:6px}
-    .grid-rooms{gap:8px}
-    .room-col{padding:8px}
-    .list{gap:6px}
-    .slot{padding:8px}
-    input,select,button{min-height:36px;padding:8px 10px}
-  }
 
-  /* さらに狭い端末（~380px）で絶対に切らさない最小化 */
+  /* さらに狭い端末（~400px）での最小化 */
   @media (max-width:400px){
     :root{ --fs-body: 13px; --fs-small: 12px; --fs-tiny: 11px; --pad-card: 6px; }
     .grid-rooms{gap:6px}
@@ -125,7 +113,7 @@
     .pill{padding:4px 8px}
   }
 
-  /* ======== 共通モーダル（設定/編集/ログインで使用）======== */
+  /* ======== モーダル共通 ======== */
   .dialog{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:1000;padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
   .dialog::before{content:"";position:absolute;inset:0;background:rgba(15,23,42,.45);backdrop-filter:saturate(120%) blur(2px)}
   .dialog .panel{position:relative;z-index:1;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);width:min(640px,96vw);max-height:85vh;display:flex;flex-direction:column}
@@ -135,7 +123,7 @@
   .dialog .row{display:flex;gap:10px;align-items:center;margin:8px 0}
   .dialog .row input, .dialog .row select{flex:1}
 
-  /* 設定モーダル固有（トグルUI） */
+  /* 設定モーダル（トグルUI） */
   .settings .toggle{position:relative;display:inline-flex;align-items:center;width:50px;height:28px}
   .settings .toggle input{display:none}
   .settings .toggle .track{position:relative;flex:0 0 100%;height:100%;background:#e5e7eb;border-radius:999px;border:1px solid #d1d5db;transition:.2s}
@@ -145,17 +133,21 @@
   .settings .switchRow{display:flex;align-items:center;gap:12px}
   .settings .label{min-width:8em}
 
-  /* ゲート&ローディング（リンクや許可ボタンは完全に非表示）*/
-  #gate{display:none}
+  /* ゲート＆ローディング／ブロック画面 */
   #loading{max-width:960px;margin:24px auto;padding:24px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow)}
+  #blocked{max-width:640px;margin:24px auto;padding:24px;border:1px dashed var(--line);border-radius:12px;background:#fff}
+  #blocked h3{margin:0 0 8px 0}
   pre.debug{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:8px;overflow:auto;font-size:12px}
   </style>
 </head>
 <body>
 
-<!-- 最小限ローディング（gateは完全非表示） -->
-<div id="loading" style="display:none">
-  <b>管理者画面の初期設定中...</b>
+<!-- ローディング表示（初期） -->
+<div id="loading" style="display:none"><b>管理者画面の初期設定中...</b></div>
+<!-- 端末未登録などでブロックされた時の明示表示（真っ白対策） -->
+<div id="blocked" style="display:none">
+  <h3>この端末では管理者画面を表示できません</h3>
+  <p class="note">端末が未登録か、ログインが有効でログインされていません。管理者に確認してください。</p>
 </div>
 
 <!-- 本体UI -->
@@ -310,7 +302,7 @@ function saveSettings(s){ localStorage.setItem(ADMIN_KEYS.SETTINGS, JSON.stringi
 function ensureDefaults(){
   const s = loadSettings();
   s.loginEnabled ??= false;
-  s.deviceLockEnabled ??= true;  // 既定で端末制限ON
+  s.deviceLockEnabled ??= false;  // 既定：端末制限 OFF（真っ白問題の元を断つ）
   s.users ??= [];
   s.allowedDevices ??= [];
   saveSettings(s);
@@ -321,7 +313,7 @@ function allowThisDevice(){
   if(!s.allowedDevices.includes(id)){ s.allowedDevices.push(id); saveSettings(s); }
 }
 
-/** ========== 初回ゲート（外部にURLや許可UIを一切出さない） ========== */
+/** ========== 初回ゲート ========== */
 function stripKeyFromURL(){
   const url = new URL(location.href);
   url.searchParams.delete('key');
@@ -336,7 +328,7 @@ function isAllowed(){
 
 /** ========== 予約/抽選ロジック ========== */
 const CONFIG = { rooms:["1","2"], slotStart:"09:00", slotEnd:"21:00", slotMinutes:20,
-  /* ★優先枠を明示：室1=14-16、室2=13-16 */
+  /* ★優先枠：室1=14-16、室2=13-16（平日＆祝日除外時のみ可視） */
   priority: { "1": { start: "14:00", end: "16:00" }, "2": { start: "13:00", end: "16:00" } }
 };
 
@@ -417,7 +409,9 @@ const el={
   hdr:()=>document.getElementById('hdr'),
   main:()=>document.getElementById('main'),
   roomsWrap:()=>document.getElementById('roomsWrap'),
-  gridRooms:()=>document.getElementById('gridRooms')
+  gridRooms:()=>document.getElementById('gridRooms'),
+  loading:()=>document.getElementById('loading'),
+  blocked:()=>document.getElementById('blocked')
 };
 
 /** ========== スロット描画 ========== */
@@ -597,14 +591,12 @@ function fitRoomsToViewport(){
   const grid = el.gridRooms();
   if(!wrap || !grid) return;
 
-  // レンダ後に計測（レイアウトが落ち着いてから）
   requestAnimationFrame(()=>{
-    // 一旦リセット
     grid.style.transform = 'none';
     wrap.style.height = 'auto';
 
-    const avail = Math.floor(wrap.clientWidth);   // 利用可能幅（整数化でサブピクセル誤差対策）
-    const actual = Math.ceil(grid.scrollWidth);   // 実必要幅（切れ対策で天井）
+    const avail = Math.floor(wrap.clientWidth);
+    const actual = Math.ceil(grid.scrollWidth);
 
     let scale = 1;
     if(actual > avail){
@@ -612,21 +604,13 @@ function fitRoomsToViewport(){
       scale = Math.max(0.70, Math.min(1, scale));
     }
     grid.style.transform = `scale(${scale})`;
-
-    // スケール後の高さを確保（+2pxでボーダー分の逃げ）
     const h = Math.ceil(grid.getBoundingClientRect().height * scale) + 2;
     wrap.style.height = `${h}px`;
   });
-} // 下限0.75まで縮小
-
-  grid.style.transform = `scale(${scale})`;
-  // 元の高さにスケールを掛けてラップ要素に確保
-  const h = grid.offsetHeight * scale;
-  wrap.style.height = `${h}px`;
 }
 window.addEventListener('resize', fitRoomsToViewport, {passive:true});
 
-/** ========== ゲート駆動（URLや許可UIは見せない） ========== */
+/** ========== ゲート駆動 ========== */
 (function gate(){
   ensureDefaults();
 
@@ -634,17 +618,18 @@ window.addEventListener('resize', fitRoomsToViewport, {passive:true});
   const key = params.get('key');
 
   if(key){
-    document.getElementById('loading').style.display = 'block';
+    el.loading().style.display = 'block';
     if(key === ADMIN_ACCESS_KEY){
       allowThisDevice();
       setTimeout(()=>{
         stripKeyFromURL();
-        document.getElementById('loading').style.display = 'none';
+        el.loading().style.display = 'none';
         boot();
-      }, 200);
+      }, 150);
       return;
     } else {
-      // 不正キー時も何も出さない（情報を一切漏らさない）
+      // 不正キー：静かに失敗（何も表示しないより、明示ブロック）
+      el.blocked().style.display = 'block';
       return;
     }
   }
@@ -652,7 +637,8 @@ window.addEventListener('resize', fitRoomsToViewport, {passive:true});
   if(isAllowed()){
     boot();
   } else {
-    // 端末未登録時：画面には何も出さない（静かにブロック）
+    // 端末未登録・ログイン要件未達時は明示
+    el.blocked().style.display = 'block';
     return;
   }
 })();
