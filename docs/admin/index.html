@@ -17,9 +17,9 @@
     --primary:#1d4ed8; --ok:#16a34a; --danger:#dc2626;
     --panel:#f0f9ff; --radius:14px; --space:16px;
     --shadow:0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
-    --panel-br:#bae6fd; --priority:#f9a8d4; /* legacy var */
+    --panel-br:#bae6fd; --priority:#f9a8d4;
     --g1:#e0f2fe; --g2:#fde7f3; --row-priority:#fef9c3; /* 表（抽選）用の薄黄 */
-    --priority-slot:#fffbe6; /* カードの優先枠：薄い黄 */
+    --priority-slot:#fffbe6; /* カードの優先枠：さらに薄い黄 */
     --fs-body: clamp(13px, 2.9vw, 15px);
     --fs-small: clamp(11px, 2.6vw, 13px);
     --fs-tiny: clamp(10px, 2.3vw, 12px);
@@ -54,16 +54,16 @@
   .section{padding:12px;display:grid;gap:10px}
 
   /* 2列（室1/室2） */
-  .grid-rooms-wrap{position:relative; width:100%; overflow:hidden;}
+  .grid-rooms-wrap{position:relative; width:100%; overflow:hidden; /* スケールで高さを確保するため明示 */}
   .grid-rooms{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px; transform-origin:top left; will-change:transform;}
   .room-col{border:1px solid var(--panel-br);border-radius:12px;background:var(--panel);padding:10px;min-width:0}
   .room-col.room2{background:var(--g2); border-color:#fbcfe8;}
   .room-title{font-weight:800;margin:0 0 8px 0;font-size:clamp(14px,3.4vw,16px)}
   .list{display:grid;grid-template-columns:1fr;gap:8px;min-width:0}
 
-  /* スロット（優先は黄背景） */
+  /* スロットを3段構成に（よりコンパクト） */
   .slot{border:1px solid var(--line);border-radius:12px;background:#ffffff;padding:var(--pad-card);display:flex;flex-direction:column;gap:8px;font-size:var(--fs-small);min-width:0}
-  .slot.priority{border:1px solid var(--line) !important; background:var(--priority-slot) !important; box-shadow:none !important;}
+  .slot.priority{border:1px solid var(--line); background:var(--priority-slot);}
   .slot .row1{display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:nowrap;min-width:0}
   .slot .row1 .time{font-weight:700;font-size:var(--fs-body)}
   .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid #cbd5e1;border-radius:999px;padding:3px 8px;font-size:var(--fs-tiny);white-space:nowrap}
@@ -90,7 +90,7 @@
   .table tbody tr:hover td{background:rgba(59,130,246,0.06)}
   tr.priorityRow td{background:var(--row-priority) !important}
 
-  /* スマホ最適化 */
+  /* スマホ最適化：横スクロールなしで室1/2を収める */
   @media (max-width:640px){
     .container{padding:12px}
     header .inner{flex-direction:column;align-items:stretch;gap:10px}
@@ -102,9 +102,21 @@
     .list{gap:6px}
     .slot{padding:8px}
     input,select,button{min-height:36px;padding:8px 10px}
+    /* カード枠を必ず画面幅に収める */
     .card{border-width:1px;}
   }
+    header .inner{flex-direction:column;align-items:stretch;gap:10px}
+    .right{flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
+    .right>*{flex:0 0 auto}
+    .meta{grid-template-columns:1fr;gap:6px}
+    .grid-rooms{gap:8px}
+    .room-col{padding:8px}
+    .list{gap:6px}
+    .slot{padding:8px}
+    input,select,button{min-height:36px;padding:8px 10px}
+  }
 
+  /* さらに狭い端末（~380px）で絶対に切らさない最小化 */
   @media (max-width:400px){
     :root{ --fs-body: 13px; --fs-small: 12px; --fs-tiny: 11px; --pad-card: 6px; }
     .grid-rooms{gap:6px}
@@ -113,7 +125,7 @@
     .pill{padding:4px 8px}
   }
 
-  /* ======== 共通モーダル ======== */
+  /* ======== 共通モーダル（設定/編集/ログインで使用）======== */
   .dialog{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:1000;padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
   .dialog::before{content:"";position:absolute;inset:0;background:rgba(15,23,42,.45);backdrop-filter:saturate(120%) blur(2px)}
   .dialog .panel{position:relative;z-index:1;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);width:min(640px,96vw);max-height:85vh;display:flex;flex-direction:column}
@@ -122,6 +134,16 @@
   .dialog .foot{padding:12px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
   .dialog .row{display:flex;gap:10px;align-items:center;margin:8px 0}
   .dialog .row input, .dialog .row select{flex:1}
+
+  /* 設定モーダル固有（トグルUI） */
+  .settings .toggle{position:relative;display:inline-flex;align-items:center;width:50px;height:28px}
+  .settings .toggle input{display:none}
+  .settings .toggle .track{position:relative;flex:0 0 100%;height:100%;background:#e5e7eb;border-radius:999px;border:1px solid #d1d5db;transition:.2s}
+  .settings .toggle .thumb{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;border:1px solid #cbd5e1;transition:.2s}
+  .settings .toggle input:checked + .track{background:#2563eb;border-color:#1d4ed8}
+  .settings .toggle input:checked + .track .thumb{left:calc(100% - 26px)}
+  .settings .switchRow{display:flex;align-items:center;gap:12px}
+  .settings .label{min-width:8em}
 
   /* ゲート&ローディング（リンクや許可ボタンは完全に非表示）*/
   #gate{display:none}
@@ -159,7 +181,7 @@
   <div class="card" id="instantCard">
     <h3 id="instantTitle">当日の予約状況</h3>
     <div class="section">
-      <div id="roomsWrap" class="grid-rooms-wrap" aria-label="当日の予約状況エリア">
+      <div id="roomsWrap" class="grid-rooms-wrap" aria-label="当日の予約状況エリア" style="padding-right:1px">
         <div id="gridRooms" class="grid-rooms">
           <div class="room-col">
             <h4 class="room-title">シャワー室1</h4>
@@ -216,7 +238,7 @@
   </div>
 </div>
 
-<!-- 設定モーダル -->
+<!-- 設定モーダル（中央表示・独立スクロール） -->
 <div class="dialog settings" id="settingsDialog" role="dialog" aria-modal="true" aria-label="設定">
   <div class="panel">
     <div class="head"><div>設定</div><button class="ghost" id="closeSettings">閉じる</button></div>
@@ -272,13 +294,10 @@ const ADMIN_ACCESS_KEY = "kagoshimauniv_peds";
 const ADMIN_KEYS = { SETTINGS:'sr_admin_settings', SESSION:'sr_admin_session', DEVICE:'sr_admin_device_id' };
 const KEY = { NAME:"sr_name", UID:"sr_uid", RES:"sr_reservations", LOT:"sr_lottery", PART:"sr_lot_participants" };
 
-/** ========== SW登録を管理画面では無効化 ==========
- * 管理画面ではオフラインプリキャッシュに失敗しがちなため、
- * ここでは登録しません（ユーザー側UIで登録する想定）。
- */
-// if ('serviceWorker' in navigator) {
-//   navigator.serviceWorker.register('/shower-pwa/sw.js', {scope:'/shower-pwa/'}).catch(console.warn);
-// }
+/** ========== SW登録（絶対パス）========== */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/shower-pwa/sw.js').catch(console.error);
+}
 
 /** ========== 端末/設定ユーティリティ ========== */
 function getDeviceId(){
@@ -401,7 +420,7 @@ const el={
   gridRooms:()=>document.getElementById('gridRooms')
 };
 
-/** ========== 手動編集スロット描画 ========== */
+/** ========== スロット描画 ========== */
 function currentReservation(id){ const res=storage.getRes(); return res[id] || null; }
 function renderInstant(dateISO){
   const target=dateISO || el.datePicker().value;
@@ -578,29 +597,36 @@ function fitRoomsToViewport(){
   const grid = el.gridRooms();
   if(!wrap || !grid) return;
 
-  // リセットして素のサイズ取得
-  grid.style.transform = 'none';
-  wrap.style.height = 'auto';
+  // レンダ後に計測（レイアウトが落ち着いてから）
+  requestAnimationFrame(()=>{
+    // 一旦リセット
+    grid.style.transform = 'none';
+    wrap.style.height = 'auto';
 
-  const availW  = Math.floor(wrap.clientWidth);
-  const actualW = Math.ceil(grid.scrollWidth);
-  const actualH = grid.offsetHeight; // 未スケール高さ
+    const avail = Math.floor(wrap.clientWidth);   // 利用可能幅（整数化でサブピクセル誤差対策）
+    const actual = Math.ceil(grid.scrollWidth);   // 実必要幅（切れ対策で天井）
 
-  let scale = 1;
-  if(actualW > availW){
-    scale = (availW - 1) / actualW; // 右端1px逃がす
-    scale = Math.max(0.70, Math.min(1, scale));
-  }
+    let scale = 1;
+    if(actual > avail){
+      scale = (avail - 1) / actual; // 右端の1pxクリップ対策
+      scale = Math.max(0.70, Math.min(1, scale));
+    }
+    grid.style.transform = `scale(${scale})`;
+
+    // スケール後の高さを確保（+2pxでボーダー分の逃げ）
+    const h = Math.ceil(grid.getBoundingClientRect().height * scale) + 2;
+    wrap.style.height = `${h}px`;
+  });
+} // 下限0.75まで縮小
+
   grid.style.transform = `scale(${scale})`;
-  const h = Math.ceil(actualH * scale) + 2; // 高さ確保
+  // 元の高さにスケールを掛けてラップ要素に確保
+  const h = grid.offsetHeight * scale;
   wrap.style.height = `${h}px`;
 }
-window.addEventListener('resize', ()=>{
-  // レイアウト確定後に再フィット
-  requestAnimationFrame(fitRoomsToViewport);
-}, {passive:true});
+window.addEventListener('resize', fitRoomsToViewport, {passive:true});
 
-/** ========== ゲート（URLや許可UIは見せない） ========== */
+/** ========== ゲート駆動（URLや許可UIは見せない） ========== */
 (function gate(){
   ensureDefaults();
 
@@ -618,7 +644,7 @@ window.addEventListener('resize', ()=>{
       }, 200);
       return;
     } else {
-      // 不正キー時は何も表示しない
+      // 不正キー時も何も出さない（情報を一切漏らさない）
       return;
     }
   }
@@ -626,7 +652,7 @@ window.addEventListener('resize', ()=>{
   if(isAllowed()){
     boot();
   } else {
-    // 未登録端末は無言ブロック
+    // 端末未登録時：画面には何も出さない（静かにブロック）
     return;
   }
 })();
@@ -700,7 +726,6 @@ function openLoginPanel(){ document.getElementById('loginDialog').style.display=
 function closeLoginPanel(){ document.getElementById('loginDialog').style.display='none'; document.body.style.overflow=''; }
 
 function boot(){
-  document.getElementById('loading').style.display='none';
   el.hdr().style.display='block';
   el.main().style.display='block';
 
